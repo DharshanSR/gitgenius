@@ -5,14 +5,31 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "monthly"  # Changed from weekly to monthly
+    open-pull-requests-limit: 3  # Reduced from 10 to 3
+    groups:
+      # Group dependencies to reduce PR count
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"  # Keep type definitions separate
+      dev-dependencies:
+        dependency-type: "development"
     
-  # Enable GitHub Actions workflow updates
+  # Enable GitHub Actions workflow updates  
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 2  # Added limit to prevent spam
+    groups:
+      # Group all GitHub Actions updates together
+      actions:
+        patterns:
+          - "*"
 
-# Note: Dependabot doesn't directly handle npm tokens, but it will keep
-# your dependencies and workflows updated, reducing security vulnerabilities
+# Note: This configuration will create much fewer PRs:
+# - Monthly schedule (12 times/year instead of 52)
+# - Maximum 3 npm PRs + 2 Actions PRs = 5 total PRs max
+# - Dependencies are grouped together to reduce individual PRs
