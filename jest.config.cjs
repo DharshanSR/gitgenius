@@ -4,8 +4,14 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.ts$': ['ts-jest', {
+      useESM: true
+    }]
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(inquirer|chalk|ora|clipboardy)/)'
+  ],
+  extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
