@@ -1,7 +1,7 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { ConfigManager } from '../core/ConfigManager.js';
-import { CommitTemplate, TemplateOptions } from '../types.js';
+import { CommitTemplate } from '../types.js';
 
 export class TemplateService {
   private configManager: ConfigManager;

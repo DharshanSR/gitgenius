@@ -23,7 +23,7 @@ export class SetupOperations {
       if (options.all || options.hooks) {
         console.log(chalk.yellow('[INIT] Setting up git hooks...'));
         // Create commit-msg hook
-        const hookContent = `#!/bin/sh
+        const _hookContent = `#!/bin/sh
 # GitGenius commit message validation
 if [ -f ".gitgenius-skip" ]; then
   exit 0

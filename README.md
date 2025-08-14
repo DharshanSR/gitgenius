@@ -33,6 +33,18 @@ npm install -g @dharshansr/gitgenius
 
 After installation, you can run `gitgenius` or `gg` from any terminal.
 
+### Updates
+
+To get the latest version:
+```bash
+npm update -g @dharshansr/gitgenius
+```
+
+Check your current version:
+```bash
+gitgenius --version  # or gg --version
+```
+
 ## Quick Start
 
 1. **Configure your API key**:
@@ -259,6 +271,47 @@ npm link
 # Run tests
 npm test
 ```
+
+### Automated Release Management
+
+GitGenius includes automated version management - no need to manually update version numbers!
+
+#### Release Commands
+
+```bash
+# For bug fixes (1.0.0 → 1.0.1)
+npm run release:patch
+
+# For new features (1.0.1 → 1.1.0)
+npm run release:minor
+
+# For breaking changes (1.1.0 → 2.0.0)
+npm run release:major
+```
+
+#### What Happens Automatically
+
+Each release command automatically:
+- ✅ Runs all tests and builds the project
+- ✅ Updates version in `package.json` and `package-lock.json`
+- ✅ Creates a git commit with the version bump
+- ✅ Creates a git tag (e.g., `v1.0.1`)
+- ✅ Pushes changes and tags to GitHub
+- ✅ Publishes the new version to npm
+
+#### Example Workflow
+
+```bash
+# Make your changes
+git add .
+git commit -m "feat: add new AI provider support"
+
+# Release new minor version automatically
+npm run release:minor
+# ✨ Version bumped to 1.1.0, tagged, pushed, and published!
+```
+
+No manual version management required! 🚀
 
 ## License
 

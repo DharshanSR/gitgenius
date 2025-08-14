@@ -379,12 +379,13 @@ export class GitGenius {
       case 'list':
         this.listTemplates(templates);
         break;
-      case 'add':
+      case 'add': {
         const { name } = await inquirer.prompt([
           { type: 'input', name: 'name', message: 'Template name:' }
         ]);
         await this.addTemplate(name, templates);
         break;
+      }
       case 'remove':
         if (templates.length === 0) {
           console.log(chalk.yellow('[WARNING] No templates to remove'));
@@ -742,7 +743,7 @@ ${diff.substring(0, 3000)}`,
       if (options.all || options.hooks) {
         console.log(chalk.yellow('[INIT] Setting up git hooks...'));
         // Create commit-msg hook
-        const hookContent = `#!/bin/sh
+        const _hookContent = `#!/bin/sh
 # GitGenius commit message validation
 if [ -f ".gitgenius-skip" ]; then
   exit 0

@@ -24,6 +24,9 @@
     "prebuild": "npm run clean",
     "prepublishOnly": "npm run build && npm run test",
     "release": "npm run build && npm publish",
+    "release:patch": "npm version patch && git push --follow-tags && npm publish",
+    "release:minor": "npm version minor && git push --follow-tags && npm publish", 
+    "release:major": "npm version major && git push --follow-tags && npm publish",
     "format": "prettier --write src/**/*.ts",
     "validate": "npm run type-check && npm run lint && npm run test"
   },
