@@ -70,7 +70,7 @@
     "conf": "^12.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.10.4",
+    "@types/node": "^24.2.1",
     "@types/inquirer": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
