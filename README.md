@@ -1,75 +1,398 @@
-# GitGenius 
+# GitGenius
 
-**(/gɪt ˈdʒiːniəs/, Git + Genius)**
+**AI-Powered Commit Message Generator**
 
-AI-powered commit message generator with enterprise-grade features for professional development workflows.
-
-![GitGenius Banner](https://raw.githubusercontent.com/DharshanSR/gitgenius/main/assets/banner.png)
+GitGenius is a professional command-line tool that generates intelligent, context-aware commit messages using AI. Built for developers who value code quality and clear commit history.
 
 [![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr%2Fgitgenius)
-[![Downloads](https://img.shields.io/npm/dm/@dharshansr/gitgenius.svg)](https://www.npmjs.com/package/@dharshansr/gitgenius)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/DharshanSR/gitgenius/workflows/CI/badge.svg)](https://github.com/DharshanSR/gitgenius/actions)
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org/)
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Platform-Specific Setup](#platform-specific-setup)
+- [Commands](#commands)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [Contributing](#contributing)
 
 ## Features
 
-✨ **Intelligent Commit Messages**: Generate clear, context-aware commit messages based on your staged changes
-🔧 **Multiple AI Providers**: Support for OpenAI, Google Gemini, and more
-🎯 **Commit Types**: Conventional commits support with customizable types
-📋 **Copy to Clipboard**: Quick copy functionality for generated messages
-✏️ **Interactive Editing**: Refine your commit messages with built-in editor
-🌿 **Branch Management**: Interactive branch switching and management
-📊 **Git Statistics**: Detailed commit analytics and insights
-📝 **Custom Templates**: Create and manage reusable commit message templates
-⚙️ **Flexible Configuration**: Easy setup and customization
+- **Intelligent Commit Messages**: AI-generated commit messages based on staged changes
+- **Multiple AI Providers**: OpenAI GPT and Google Gemini support
+- **Conventional Commits**: Built-in support for conventional commit standards
+- **Interactive Editing**: Edit generated messages before committing
+- **Branch Management**: Interactive branch switching and management
+- **Git Statistics**: Detailed commit analytics and insights
+- **Custom Templates**: Create and manage commit message templates
+- **Cross-Platform**: Full support for Windows, macOS, and Linux
+- **Clipboard Integration**: Quick copy functionality
+- **Previous Message Retrieval**: Access and amend previous commits
 
 ## Installation
 
-Install GitGenius globally using npm:
+### Prerequisites
+
+- Node.js 16.0 or higher
+- npm 7.0 or higher
+- Git installed and configured
+
+### Global Installation
 
 ```bash
 npm install -g @dharshansr/gitgenius
 ```
 
-After installation, you can run `gitgenius` or `gg` from any terminal.
+### Verify Installation
 
-### Updates
+```bash
+gitgenius --version
+# or
+gg --version
+```
 
-To get the latest version:
+### Update to Latest Version
+
 ```bash
 npm update -g @dharshansr/gitgenius
 ```
 
-Check your current version:
+## Configuration
+
+### Initial Setup
+
+1. **Set up your AI provider API key:**
+
 ```bash
-gitgenius --version  # or gg --version
+gitgenius config apiKey
 ```
 
-## Quick Start
+2. **Choose your AI provider:**
 
-1. **Configure your API key**:
+```bash
+gitgenius config provider
+```
+
+3. **Select your preferred model:**
+
+```bash
+gitgenius config model
+```
+
+### API Key Configuration
+
+#### OpenAI Setup
+1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Create a new API key
+3. Configure GitGenius:
    ```bash
    gitgenius config apiKey
-   ```
-   Or set the environment variable:
-   ```bash
-   export GITGENIUS_API_KEY="your_api_key_here"
+   # Enter your OpenAI API key when prompted
    ```
 
-2. **Stage your changes**:
+#### Google Gemini Setup
+1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Create a new API key
+3. Configure GitGenius:
+   ```bash
+   gitgenius config provider
+   # Select "Google Gemini"
+   gitgenius config apiKey
+   # Enter your Gemini API key when prompted
+   ```
+
+### Environment Variables
+
+You can also configure GitGenius using environment variables:
+
+```bash
+export GITGENIUS_API_KEY="your_api_key_here"
+export GITGENIUS_PROVIDER="openai"  # or "gemini"
+export GITGENIUS_MODEL="gpt-3.5-turbo"  # or your preferred model
+```
+
+## Platform-Specific Setup
+
+### Windows
+
+#### PowerShell Configuration
+Add to your PowerShell profile (`$PROFILE`):
+```powershell
+$env:GITGENIUS_API_KEY = "your_api_key_here"
+```
+
+#### Command Prompt Configuration
+Add to your system environment variables:
+1. Press `Win + R`, type `sysdm.cpl`
+2. Go to Advanced > Environment Variables
+3. Add `GITGENIUS_API_KEY` with your API key value
+
+#### Configuration File Location
+```
+%APPDATA%\gitgenius\config.json
+```
+
+### macOS
+
+#### Shell Configuration
+Add to your shell profile (`~/.zshrc` or `~/.bash_profile`):
+```bash
+export GITGENIUS_API_KEY="your_api_key_here"
+export PATH="/usr/local/bin:$PATH"  # Ensure npm global packages are in PATH
+```
+
+#### Configuration File Location
+```
+~/Library/Preferences/gitgenius/config.json
+```
+
+### Linux
+
+#### Shell Configuration
+Add to your shell profile (`~/.bashrc` or `~/.zshrc`):
+```bash
+export GITGENIUS_API_KEY="your_api_key_here"
+export PATH="$HOME/.npm-global/bin:$PATH"  # If using npm global prefix
+```
+
+#### Configuration File Location
+```
+~/.config/gitgenius/config.json
+```
+
+#### Ubuntu/Debian Additional Setup
+```bash
+# Ensure npm global packages work correctly
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.profile
+source ~/.profile
+```
+
+## Usage
+
+### Basic Workflow
+
+1. **Stage your changes:**
    ```bash
    git add .
    ```
 
-3. **Generate a commit message**:
+2. **Generate commit message:**
    ```bash
    gitgenius
    ```
 
-4. **Apply the generated message**:
+3. **Apply directly:**
    ```bash
    gitgenius --apply
    ```
+
+### Quick Commands
+
+```bash
+# Generate and apply commit
+gitgenius -a
+
+# Generate with specific type
+gitgenius -t feat
+
+# Copy to clipboard
+gitgenius -c
+
+# Combine options
+gitgenius -t fix -a -c
+```
+
+## Commands
+
+### Core Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `gitgenius` | Generate commit message | `gitgenius` |
+| `gitgenius -a, --apply` | Generate and commit | `gitgenius -a` |
+| `gitgenius -c, --copy` | Copy to clipboard | `gitgenius -c` |
+| `gitgenius -t, --type <type>` | Specify commit type | `gitgenius -t feat` |
+
+### Branch Management
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `gitgenius branch` | List branches | `gitgenius branch` |
+| `gitgenius branch -r` | Include remote branches | `gitgenius branch -r` |
+| `gitgenius branch -c` | Copy branch name | `gitgenius branch -c` |
+| `gitgenius checkout` | Interactive checkout | `gitgenius checkout` |
+
+### Configuration Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `gitgenius config` | Show configuration | `gitgenius config` |
+| `gitgenius config provider` | Set AI provider | `gitgenius config provider` |
+| `gitgenius config model` | Set AI model | `gitgenius config model` |
+| `gitgenius config --reset` | Reset configuration | `gitgenius config --reset` |
+
+### Statistics and Analytics
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `gitgenius stats` | Show commit statistics | `gitgenius stats` |
+| `gitgenius stats --days 7` | Stats for 7 days | `gitgenius stats --days 7` |
+| `gitgenius stats --author "name"` | Author-specific stats | `gitgenius stats --author "John"` |
+
+### Template Management
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `gitgenius template --list` | List templates | `gitgenius template --list` |
+| `gitgenius template --add <name>` | Create template | `gitgenius template --add feat` |
+| `gitgenius template --use <name>` | Use template | `gitgenius template --use feat` |
+
+## Supported Commit Types
+
+GitGenius supports conventional commit standards:
+
+- `feat` - New features
+- `fix` - Bug fixes  
+- `docs` - Documentation changes
+- `style` - Code style changes
+- `refactor` - Code refactoring
+- `test` - Test changes
+- `chore` - Maintenance tasks
+- `perf` - Performance improvements
+- `ci` - CI/CD changes
+- `build` - Build system changes
+
+## Troubleshooting
+
+### Common Issues
+
+**"Command not found: gitgenius"**
+- Ensure npm global packages are in your PATH
+- Try reinstalling: `npm uninstall -g @dharshansr/gitgenius && npm install -g @dharshansr/gitgenius`
+
+**"Not in a git repository"**
+- Initialize git repository: `git init`
+- Ensure you're in the correct directory
+
+**"No staged changes found"**  
+- Stage your changes: `git add <files>`
+- Check status: `git status`
+
+**"Invalid API key"**
+- Verify API key: `gitgenius config apiKey`
+- Check environment variable: `echo $GITGENIUS_API_KEY`
+
+**"Network/API errors"**
+- Check internet connection
+- Verify API key has sufficient credits
+- Try different model: `gitgenius config model`
+
+### Debug Mode
+
+Enable detailed logging:
+
+**Windows (PowerShell):**
+```powershell
+$env:DEBUG = "gitgenius*"; gitgenius
+```
+
+**macOS/Linux:**
+```bash
+DEBUG=gitgenius* gitgenius
+```
+
+### Reset Configuration
+
+If experiencing persistent issues:
+```bash
+gitgenius config --reset
+```
+
+## Development
+
+### Local Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/DharshanSR/gitgenius.git
+cd gitgenius
+
+# Install dependencies
+npm install
+
+# Build project
+npm run build
+
+# Link for testing
+npm link
+
+# Run tests
+npm test
+
+# Start development
+npm run dev
+```
+
+### Release Management
+
+GitGenius includes automated version management:
+
+```bash
+# Patch release (1.0.0 → 1.0.1)
+npm run release:patch
+
+# Minor release (1.0.1 → 1.1.0)  
+npm run release:minor
+
+# Major release (1.1.0 → 2.0.0)
+npm run release:major
+```
+
+Each release command automatically:
+- Runs tests and builds
+- Updates version numbers
+- Creates git commit and tag
+- Pushes to GitHub
+- Publishes to npm
+
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Guidelines
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Ensure all tests pass
+5. Submit a pull request
+
+### Code Standards
+
+- TypeScript for all source code
+- ESLint for code quality
+- Jest for testing
+- Conventional commits for commit messages
+
+## License
+
+MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/DharshanSR/gitgenius/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/DharshanSR/gitgenius/discussions)
+- **npm Package**: [npm Page](https://www.npmjs.com/package/@dharshansr/gitgenius)
+
+---
+
+**GitGenius** - Intelligent commit messages for professional development workflows.
 
 ## Usage
 
