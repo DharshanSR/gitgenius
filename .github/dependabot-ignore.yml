@@ -1,0 +1,10 @@
+# Dependencies to ignore for Dependabot updates
+# Add package names here if you want to prevent automatic updates
+
+# Example: Ignore major version updates for critical packages
+# - dependency-name: "typescript"
+#   update-types: ["major"]
+
+# Example: Ignore all updates for a specific package
+# - dependency-name: "specific-package"
+#   update-types: ["all"]
