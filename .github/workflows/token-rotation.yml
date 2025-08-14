@@ -1,0 +1,73 @@
+name: NPM Token Health Check
+
+on:
+  schedule:
+    # Run monthly on the 1st at 9 AM UTC
+    - cron: '0 9 1 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check NPM Token Status
+        run: |
+          echo "Checking NPM token health..."
+          
+          # Test token validity
+          if npm whoami --registry https://registry.npmjs.org; then
+            echo "✅ NPM token is valid"
+          else
+            echo "❌ NPM token appears to be invalid or expired"
+            echo "::warning::NPM token may need renewal"
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Create Issue on Token Failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔑 NPM Token Needs Renewal',
+              body: `
+                ## NPM Authentication Token Issue
+                
+                The NPM token used for automated publishing appears to be expired or invalid.
+                
+                ### Action Required:
+                1. Go to [npmjs.com](https://www.npmjs.com/settings/tokens)
+                2. Generate a new **Automation** token
+                3. Update the \`NPM_TOKEN\` secret in [repository settings](https://github.com/${context.repo.owner}/${context.repo.repo}/settings/secrets/actions)
+                
+                ### Current Status:
+                - Token check failed on: ${new Date().toISOString()}
+                - Workflow: ${context.workflow}
+                - Run ID: ${context.runId}
+                
+                This issue was automatically created by the token health check workflow.
+              `,
+              labels: ['maintenance', 'urgent']
+            })
+
+  notify-expiration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Token Expiration (Estimated)
+        run: |
+          # Calculate approximate expiration (1 year from token creation)
+          # You'll need to update this date when you create the token
+          TOKEN_CREATED="2025-08-14"  # Update this with your token creation date
+          
+          EXPIRATION_DATE=$(date -d "$TOKEN_CREATED + 1 year - 30 days" +%Y-%m-%d)
+          CURRENT_DATE=$(date +%Y-%m-%d)
+          
+          if [[ "$CURRENT_DATE" > "$EXPIRATION_DATE" ]]; then
+            echo "⚠️ Token will expire within 30 days!"
+            echo "::warning::NPM token expiring soon - renewal recommended"
+          else
+            echo "✅ Token expiration is more than 30 days away"
+          fi

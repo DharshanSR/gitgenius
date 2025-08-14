@@ -72,8 +72,34 @@ jobs:
     - name: Build
       run: npm run build
     
+    - name: Verify NPM Token
+      run: |
+        echo "🔍 Verifying NPM authentication..."
+        if npm whoami --registry https://registry.npmjs.org; then
+          echo "✅ NPM token is valid"
+        else
+          echo "❌ NPM token verification failed"
+          echo "::error::NPM_TOKEN secret may be expired or invalid"
+          exit 1
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
     - name: Publish to npm
       run: npm publish --access public
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    
+    - name: Create Success Comment
+      if: success()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { version } = require('./package.json');
+          github.rest.repos.createCommitComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            commit_sha: context.sha,
+            body: `🚀 Successfully published **@dharshansr/gitgenius@${version}** to npm!\n\n📦 [View on npm](https://www.npmjs.com/package/@dharshansr/gitgenius)`
+          })

@@ -1,0 +1,18 @@
+# Dependabot configuration for automated updates
+version: 2
+updates:
+  # Enable npm dependency updates
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    
+  # Enable GitHub Actions workflow updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+
+# Note: Dependabot doesn't directly handle npm tokens, but it will keep
+# your dependencies and workflows updated, reducing security vulnerabilities
