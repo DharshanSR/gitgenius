@@ -6,6 +6,17 @@ import { GitGenius } from './core/GitGeniusCore.js';
 import { ConfigManager } from './core/ConfigManager.js';
 import { BranchManager } from './core/BranchManager.js';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '..', 'package.json'), 'utf8')
+);
 
 const program = new Command();
 const gitGenius = new GitGenius();
@@ -15,7 +26,7 @@ const branchManager = new BranchManager();
 program
   .name('gitgenius')
   .description('AI-powered commit message generator with enhanced features')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 // Main command - generate commit message
 program
