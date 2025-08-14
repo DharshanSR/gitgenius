@@ -3,7 +3,7 @@ import { describe, test, expect } from '@jest/globals';
 describe('GitGenius Core', () => {
   test('should have correct package configuration', () => {
     const packageJson = require('../../package.json');
-    expect(packageJson.version).toBe('1.0.0');
+    expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/); // Semantic version format
     expect(packageJson.name).toBe('@dharshansr/gitgenius');
   });
 
