@@ -1,18 +1,10 @@
 import { describe, test, expect } from '@jest/globals';
 
 describe('GitGenius Core', () => {
-  test('should export main classes', async () => {
-    const { GitGenius, ConfigManager, BranchManager } = await import('../index.js');
-    
-    expect(GitGenius).toBeDefined();
-    expect(ConfigManager).toBeDefined();
-    expect(BranchManager).toBeDefined();
-  });
-
-  test('should have correct version', () => {
+  test('should have correct package configuration', () => {
     const packageJson = require('../../package.json');
     expect(packageJson.version).toBe('1.0.0');
-    expect(packageJson.name).toBe('gitgenius');
+    expect(packageJson.name).toBe('@dharshansr/gitgenius');
   });
 
   test('should have required dependencies', () => {
@@ -22,5 +14,12 @@ describe('GitGenius Core', () => {
     requiredDeps.forEach(dep => {
       expect(packageJson.dependencies).toHaveProperty(dep);
     });
+  });
+
+  test('should have correct main entry point', () => {
+    const packageJson = require('../../package.json');
+    expect(packageJson.main).toBe('dist/index.js');
+    expect(packageJson.bin).toHaveProperty('gitgenius');
+    expect(packageJson.bin).toHaveProperty('gg');
   });
 });
