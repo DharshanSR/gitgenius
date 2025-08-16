@@ -4,9 +4,9 @@
 
 GitGenius is a professional command-line tool that generates intelligent, context-aware commit messages using AI. Built for developers who value code quality and clear commit history.
 
-[![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr%2Fgitgenius)
+[![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr/gitgenius)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-17%2B-green.svg)](https://nodejs.org/)
 
 ## Table of Contents
 
