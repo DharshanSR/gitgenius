@@ -1,6 +1,6 @@
 {
   "name": "@dharshansr/gitgenius",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "AI-powered commit message generator with enhanced features",
   "type": "module",
   "main": "dist/index.js",
