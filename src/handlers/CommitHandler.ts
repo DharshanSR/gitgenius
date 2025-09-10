@@ -52,6 +52,14 @@ export class CommitHandler {
         this.storeInHistory(commitMessage, options);
         
         spinner.stop();
+        
+        if (options.dryRun) {
+          console.log(chalk.blue('🔍 [DRY RUN] Generated commit message (no changes applied):'));
+          console.log(chalk.white(`          ${commitMessage}`));
+          console.log(chalk.gray('          Use without --dry-run to apply this commit message'));
+          return;
+        }
+        
         console.log(chalk.green('✨ [SUCCESS] Generated commit message:'));
         console.log(chalk.white(`          ${commitMessage}`));
 
