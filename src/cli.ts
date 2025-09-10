@@ -38,6 +38,7 @@ program
   .option('-t, --type <type>', 'Specify the commit type (feat, fix, chore, etc.)')
   .option('-p, --provider <provider>', 'AI provider to use (openai, gemini, anthropic)')
   .option('-d, --detailed', 'Generate detailed commit message with body')
+  .option('--dry-run', 'Generate commit message without applying changes')
   .action(async (options) => {
     try {
       await gitGenius.generateCommit(options);
