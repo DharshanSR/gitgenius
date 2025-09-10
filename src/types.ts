@@ -5,6 +5,7 @@ export interface CommitOptions {
   type?: string;
   provider?: string;
   detailed?: boolean;
+  dryRun?: boolean;
 }
 
 export interface PullRequestOptions {
