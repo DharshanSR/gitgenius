@@ -205,6 +205,9 @@ gitgenius -t feat
 # Copy to clipboard
 gitgenius -c
 
+# Preview without applying (dry run)
+gitgenius --dry-run
+
 # Combine options
 gitgenius -t fix -a -c
 ```
@@ -219,6 +222,7 @@ gitgenius -t fix -a -c
 | `gitgenius -a, --apply` | Generate and commit | `gitgenius -a` |
 | `gitgenius -c, --copy` | Copy to clipboard | `gitgenius -c` |
 | `gitgenius -t, --type <type>` | Specify commit type | `gitgenius -t feat` |
+| `gitgenius --dry-run` | Preview commit message | `gitgenius --dry-run` |
 
 ### Branch Management
 
