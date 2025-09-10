@@ -1,4 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
+import { CommitOptions } from '../types.js';
 
 describe('GitGenius Core', () => {
   test('should have correct package configuration', () => {
@@ -21,5 +22,16 @@ describe('GitGenius Core', () => {
     expect(packageJson.main).toBe('dist/index.js');
     expect(packageJson.bin).toHaveProperty('gitgenius');
     expect(packageJson.bin).toHaveProperty('gg');
+  });
+
+  test('should support dry-run option in CommitOptions interface', () => {
+    const commitOptions: CommitOptions = {
+      dryRun: true,
+      type: 'feat',
+      apply: false
+    };
+    
+    expect(commitOptions.dryRun).toBe(true);
+    expect(typeof commitOptions.dryRun).toBe('boolean');
   });
 });
