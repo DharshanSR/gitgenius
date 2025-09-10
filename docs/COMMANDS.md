@@ -60,12 +60,15 @@ gitgenius -t docs -e -p gemini
 - `-e, --edit` - Enable interactive editing
 - `-t, --type <type>` - Specify commit type (feat, fix, docs, etc.)
 - `-p, --provider <provider>` - AI provider (openai, gemini, anthropic)
+- `--dry-run` - Generate commit message without applying changes
 
 **Examples:**
 ```bash
 gitgenius -t feat -a                    # Generate feat commit and apply
 gitgenius --provider gemini --copy      # Use Gemini and copy to clipboard
 gitgenius -t fix -e -a                  # Generate fix, edit interactively, then apply
+gitgenius --dry-run                     # Preview commit message without applying
+gitgenius -t feat --dry-run             # Preview feat-type commit message
 ```
 
 ### `prev`
