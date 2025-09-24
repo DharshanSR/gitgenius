@@ -65,12 +65,28 @@ export class ConfigManager {
   private listConfig(): void {
     const config = this.config.store;
     console.log(chalk.blue('📋 Current Configuration:'));
-    
+
+    // Always mask API keys, whether from config or environment
+    const apiKeys = [
+      'apiKey',
+      'GITGENIUS_API_KEY',
+      'OPENAI_API_KEY',
+      'GEMINI_API_KEY',
+    ];
+
+    // Print config keys, masking any API key
     Object.entries(config).forEach(([key, value]) => {
-      if (key === 'apiKey' && value) {
+      if (apiKeys.includes(key) && value) {
         console.log(`  ${chalk.yellow(key)}: ${chalk.gray('***hidden***')}`);
       } else {
         console.log(`  ${chalk.yellow(key)}: ${chalk.white(JSON.stringify(value))}`);
+      }
+    });
+
+    // Also show if API keys are set in environment (but always masked)
+    apiKeys.forEach((envKey) => {
+      if (process.env[envKey]) {
+        console.log(`  ${chalk.yellow(envKey)} (env): ${chalk.gray('***hidden***')}`);
       }
     });
   }

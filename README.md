@@ -4,9 +4,10 @@
 
 GitGenius is a professional command-line tool that generates intelligent, context-aware commit messages using AI. Built for developers who value code quality and clear commit history.
 
-[![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr%2Fgitgenius)
+[![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr/gitgenius)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green.svg)](https://nodejs.org/)
+[![GitHub Pages](https://img.shields.io/badge/Demo-Live-brightgreen.svg)](https://dharshansr.github.io/gitgenius/)
 
 ## Table of Contents
 
@@ -204,6 +205,9 @@ gitgenius -t feat
 # Copy to clipboard
 gitgenius -c
 
+# Preview without applying (dry run)
+gitgenius --dry-run
+
 # Combine options
 gitgenius -t fix -a -c
 ```
@@ -218,6 +222,7 @@ gitgenius -t fix -a -c
 | `gitgenius -a, --apply` | Generate and commit | `gitgenius -a` |
 | `gitgenius -c, --copy` | Copy to clipboard | `gitgenius -c` |
 | `gitgenius -t, --type <type>` | Specify commit type | `gitgenius -t feat` |
+| `gitgenius --dry-run` | Preview commit message | `gitgenius --dry-run` |
 
 ### Branch Management
 

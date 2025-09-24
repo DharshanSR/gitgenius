@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-09-10
+
+### Added
+- **New Feature**: `--dry-run` option for commit command
+  - Preview generated commit messages without applying changes
+  - Helpful for testing AI-generated messages before committing
+  - Usage: `gitgenius --dry-run` or `gitgenius -t feat --dry-run`
+
+### Improved
+- Enhanced user experience with commit message previewing
+- Updated documentation with dry-run examples
+
+## [1.1.0] - 2025-08-16
+
+### Changed
+- **BREAKING**: Updated Node.js engine requirement to >=20.0.0
+- Updated `conf` dependency from 12.0.0 to 14.0.0 for enhanced configuration management
+- Improved dependency management and security updates
+
+### Added
+- Enhanced configuration features with latest conf package
+- Better TypeScript support and performance improvements
+
+### Security
+- Updated dependencies to latest secure versions
+
 ## [1.0.0] - 2025-08-14
 
 ### Added
