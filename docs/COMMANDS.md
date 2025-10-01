@@ -119,13 +119,14 @@ gitgenius suggest --scope              # Just suggest scope
 ## 🔧 **Configuration & Setup**
 
 ### `config`
-Manage GitGenius configuration settings.
+Manage GitGenius configuration settings with validation, migration, and templates.
 
 ```bash
 gitgenius config
 gitgenius config provider
 gitgenius config apiKey your_key_here
 gitgenius config --reset
+gitgenius config --template gemini
 ```
 
 **Arguments:**
@@ -135,6 +136,21 @@ gitgenius config --reset
 **Options:**
 - `--reset` - Reset all configuration
 - `--list` - List all configuration
+- `--backup` - Backup current configuration
+- `--restore <file>` - Restore configuration from backup
+- `--validate` - Validate current configuration
+- `--template <name>` - Apply a configuration template
+- `--export <file>` - Export configuration to file
+- `--import <file>` - Import configuration from file
+- `--migrate` - Manually migrate configuration to latest version
+
+**Available Templates:**
+- `default` - Default OpenAI GPT-3.5 configuration
+- `openai-gpt4` - GPT-4 for detailed commit messages
+- `gemini` - Google Gemini Pro configuration
+- `concise` - Lower token limit for concise messages
+- `detailed` - Higher token limit for detailed messages
+- `conventional` - Strict conventional commits format
 
 **Examples:**
 ```bash
@@ -143,7 +159,20 @@ gitgenius config provider openai        # Set provider to OpenAI
 gitgenius config model gpt-4           # Set model to GPT-4
 gitgenius config --list                # Show all settings
 gitgenius config --reset               # Reset to defaults
+gitgenius config --validate            # Validate configuration
+gitgenius config --backup              # Backup configuration
+gitgenius config --template gemini     # Apply Gemini template
+gitgenius config --export config.json  # Export to file
+gitgenius config --import config.json  # Import from file
 ```
+
+**Configuration Inheritance:**
+GitGenius uses a three-level configuration system:
+1. **Global** - System-wide settings (lowest priority)
+2. **User** - User-specific settings (medium priority)
+3. **Project** - Project-specific settings in `.gitgenius/` (highest priority)
+
+Project settings override user settings, which override global settings.
 
 ### `init`
 Initialize repository with GitGenius best practices.

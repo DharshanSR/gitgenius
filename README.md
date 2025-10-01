@@ -64,6 +64,22 @@ npm update -g @dharshansr/gitgenius
 
 ## Configuration
 
+### Quick Start with Templates
+
+Get started quickly with pre-configured templates:
+
+```bash
+# Apply a template for quick setup
+gitgenius config --template default      # OpenAI GPT-3.5 (recommended)
+gitgenius config --template gemini       # Google Gemini Pro
+gitgenius config --template openai-gpt4  # OpenAI GPT-4 (detailed)
+gitgenius config --template concise      # Short, concise messages
+gitgenius config --template detailed     # Long, detailed messages
+
+# Then set your API key
+gitgenius config apiKey
+```
+
 ### Initial Setup
 
 1. **Set up your AI provider API key:**
@@ -83,6 +99,51 @@ gitgenius config provider
 ```bash
 gitgenius config model
 ```
+
+### Advanced Configuration Management
+
+GitGenius provides powerful configuration management features:
+
+#### Validation
+```bash
+gitgenius config --validate    # Check configuration for errors
+```
+
+#### Backup & Restore
+```bash
+gitgenius config --backup                    # Create backup
+gitgenius config --restore backup-file.json  # Restore from backup
+```
+
+#### Import & Export
+```bash
+gitgenius config --export my-config.json   # Export to share
+gitgenius config --import team-config.json # Import team settings
+```
+
+#### Migration
+```bash
+gitgenius config --migrate    # Manually migrate to latest version
+```
+
+### Configuration Inheritance
+
+GitGenius uses a three-level configuration system:
+
+1. **Global** - System-wide settings (lowest priority)
+   - Location: `~/.config/gitgenius/` (Linux/macOS) or `%APPDATA%/gitgenius/` (Windows)
+   - Use for default settings across all projects
+
+2. **User** - User-specific settings (medium priority)
+   - Same location as global, but can override specific values
+   - Use for personal preferences
+
+3. **Project** - Project-specific settings (highest priority)
+   - Location: `.gitgenius/config.json` in your git repository
+   - Use for team or project-specific requirements
+   - Overrides both user and global settings
+
+Example use case: Set OpenAI as your global provider, but use Gemini for a specific project by creating a project config in that repository.
 
 ### API Key Configuration
 
@@ -241,6 +302,20 @@ gitgenius -t fix -a -c
 | `gitgenius config provider` | Set AI provider | `gitgenius config provider` |
 | `gitgenius config model` | Set AI model | `gitgenius config model` |
 | `gitgenius config --reset` | Reset configuration | `gitgenius config --reset` |
+| `gitgenius config --validate` | Validate configuration | `gitgenius config --validate` |
+| `gitgenius config --backup` | Backup configuration | `gitgenius config --backup` |
+| `gitgenius config --restore <file>` | Restore from backup | `gitgenius config --restore backup.json` |
+| `gitgenius config --template <name>` | Apply template | `gitgenius config --template gemini` |
+| `gitgenius config --export <file>` | Export configuration | `gitgenius config --export config.json` |
+| `gitgenius config --import <file>` | Import configuration | `gitgenius config --import config.json` |
+
+**Configuration Templates:**
+- `default` - Default OpenAI GPT-3.5 configuration
+- `openai-gpt4` - GPT-4 for detailed messages
+- `gemini` - Google Gemini Pro configuration
+- `concise` - Concise messages with lower token limit
+- `detailed` - Detailed messages with higher token limit
+- `conventional` - Strict conventional commits format
 
 ### Statistics and Analytics
 
@@ -448,11 +523,31 @@ gitgenius checkout                # Interactive branch checkout
 
 #### Configuration
 ```bash
-gitgenius config                  # Show all config
-gitgenius config provider         # Set AI provider
-gitgenius config model            # Set AI model
-gitgenius config --reset          # Reset configuration
+gitgenius config                    # Show all config
+gitgenius config provider           # Set AI provider
+gitgenius config model              # Set AI model
+gitgenius config --reset            # Reset configuration
+gitgenius config --validate         # Validate configuration
+gitgenius config --backup           # Backup configuration
+gitgenius config --restore file.json # Restore from backup
+gitgenius config --template gemini  # Apply Gemini template
+gitgenius config --export file.json # Export configuration
 ```
+
+**Configuration Inheritance:**
+GitGenius uses a three-level configuration system:
+- **Global**: System-wide settings (lowest priority)
+- **User**: User-specific settings (medium priority)  
+- **Project**: Project-specific settings in `.gitgenius/` (highest priority)
+
+**Configuration Templates:**
+Quick setup with pre-configured templates:
+- `default` - OpenAI GPT-3.5 (balanced)
+- `openai-gpt4` - GPT-4 (detailed)
+- `gemini` - Google Gemini Pro
+- `concise` - Short messages
+- `detailed` - Long messages
+- `conventional` - Strict format
 
 #### Templates
 ```bash
