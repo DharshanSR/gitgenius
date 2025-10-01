@@ -73,6 +73,13 @@ program
   .argument('[value]', 'Configuration value')
   .option('--reset', 'Reset all configuration')
   .option('--list', 'List all configuration')
+  .option('--backup', 'Backup current configuration')
+  .option('--restore <file>', 'Restore configuration from backup')
+  .option('--validate', 'Validate current configuration')
+  .option('--template <name>', 'Apply a configuration template')
+  .option('--export <file>', 'Export configuration to file')
+  .option('--import <file>', 'Import configuration from file')
+  .option('--migrate', 'Manually migrate configuration')
   .action(async (key, value, options) => {
     try {
       await configManager.handleConfig(key, value, options);

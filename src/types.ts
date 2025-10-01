@@ -27,6 +27,13 @@ export interface PreviousCommitOptions {
 export interface ConfigOptions {
   reset?: boolean;
   list?: boolean;
+  backup?: boolean;
+  restore?: string;
+  validate?: boolean;
+  template?: string;
+  export?: string;
+  import?: string;
+  migrate?: boolean;
 }
 
 export interface BranchOptions {
@@ -129,3 +136,27 @@ export interface GitStats {
   linesAdded: number;
   linesDeleted: number;
 }
+
+export interface ConfigSchema {
+  provider: string;
+  model: string;
+  apiKey: string | null;
+  maxTokens: number;
+  temperature: number;
+  commitTypes: string[];
+  [key: string]: any;
+}
+
+export interface ConfigBackup {
+  version: string;
+  timestamp: string;
+  config: ConfigSchema;
+}
+
+export interface ConfigTemplate {
+  name: string;
+  description: string;
+  config: Partial<ConfigSchema>;
+}
+
+export type ConfigLevel = 'global' | 'user' | 'project';
