@@ -33,6 +33,12 @@ GitGenius is a professional command-line tool that generates intelligent, contex
 - **Cross-Platform**: Full support for Windows, macOS, and Linux
 - **Clipboard Integration**: Quick copy functionality
 - **Previous Message Retrieval**: Access and amend previous commits
+- **🆕 Robust Git Integration**: Advanced Git state detection and error handling
+  - Detached HEAD detection and warnings
+  - Merge conflict detection with resolution hints
+  - Dirty workspace validation before operations
+  - Git worktrees and submodules support
+  - CI/CD-friendly error codes and messages
 
 ## Installation
 
@@ -333,6 +339,28 @@ gitgenius -t fix -a -c
 | `gitgenius template --add <name>` | Create template | `gitgenius template --add feat` |
 | `gitgenius template --use <name>` | Use template | `gitgenius template --use feat` |
 
+### Git State & Diagnostics
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `gitgenius state` | Show repository state | `gitgenius state` |
+| `gitgenius state --validate` | Validate Git environment | `gitgenius state --validate` |
+| `gitgenius state --worktrees` | Show worktree details | `gitgenius state --worktrees` |
+| `gitgenius state --submodules` | Show submodule details | `gitgenius state --submodules` |
+
+**State Information Shown:**
+- Current branch or detached HEAD status
+- Uncommitted changes detection
+- Staged changes status
+- Untracked files presence
+- Merge/rebase in progress warnings
+- Merge conflict detection
+- Worktree information
+- Submodule status
+- Git environment validation
+
+📖 **[Learn more about Git Integration](docs/GIT_INTEGRATION.md)**
+
 ## Supported Commit Types
 
 GitGenius supports conventional commit standards:
@@ -372,6 +400,22 @@ GitGenius supports conventional commit standards:
 - Check internet connection
 - Verify API key has sufficient credits
 - Try different model: `gitgenius config model`
+
+**"Detached HEAD state"**
+- Create a branch: `git checkout -b my-branch`
+- Return to a branch: `git checkout main`
+- Check state: `gitgenius state`
+
+**"Merge conflicts detected"**
+- View conflicts: `gitgenius state`
+- Resolve conflicts in files
+- Stage resolved files: `git add <file>`
+- Complete merge: `git commit`
+
+**"Cannot proceed: uncommitted changes"**
+- Commit changes: `git commit -am "message"`
+- Stash changes: `git stash`
+- Check state: `gitgenius state`
 
 ### Debug Mode
 

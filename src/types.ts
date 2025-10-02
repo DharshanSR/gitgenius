@@ -117,6 +117,12 @@ export interface UpdateOptions {
   force?: boolean;
 }
 
+export interface GitStateOptions {
+  validate?: boolean;
+  worktrees?: boolean;
+  submodules?: boolean;
+}
+
 export interface AIProvider {
   name: string;
   generateCommitMessage(diff: string, type?: string, detailed?: boolean): Promise<string>;

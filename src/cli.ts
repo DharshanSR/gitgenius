@@ -347,4 +347,20 @@ program
     }
   });
 
+// Git state command - Show detailed Git state
+program
+  .command('state')
+  .description('Show detailed Git repository state')
+  .option('--validate', 'Validate Git environment')
+  .option('--worktrees', 'Show worktree information')
+  .option('--submodules', 'Show submodule information')
+  .action(async (options) => {
+    try {
+      await gitGenius.showGitState(options);
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
 program.parse();
