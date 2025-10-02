@@ -109,18 +109,10 @@ export class GitStateManager {
    */
   async hasRebaseInProgress(): Promise<boolean> {
     try {
-      // Check for rebase-apply or rebase-merge directories
-      const result = await this.git.raw(['rev-parse', '--git-dir']);
-      const gitDir = result.trim();
-      
-      // Check if rebase directories exist
-      try {
-        await this.git.raw(['rev-parse', '--verify', 'REBASE_HEAD']);
-        return true;
-      } catch {
-        return false;
-      }
-    } catch (error) {
+      // Check if REBASE_HEAD exists (indicates rebase in progress)
+      await this.git.raw(['rev-parse', '--verify', 'REBASE_HEAD']);
+      return true;
+    } catch {
       return false;
     }
   }
