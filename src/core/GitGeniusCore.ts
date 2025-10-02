@@ -21,7 +21,8 @@ import {
   AliasOptions,
   InitOptions,
   FeedbackOptions,
-  UpdateOptions
+  UpdateOptions,
+  GitStateOptions
 } from '../types.js';
 
 export class GitGenius {
@@ -142,5 +143,9 @@ export class GitGenius {
 
   async showWhoami(): Promise<void> {
     return await this.systemOps.showWhoami();
+  }
+
+  async showGitState(options: GitStateOptions): Promise<void> {
+    return await this.systemOps.showGitState(options);
   }
 }
