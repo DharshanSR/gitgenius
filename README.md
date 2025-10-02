@@ -4,9 +4,10 @@
 
 GitGenius is a professional command-line tool that generates intelligent, context-aware commit messages using AI. Built for developers who value code quality and clear commit history.
 
-[![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr%2Fgitgenius)
+[![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr/gitgenius)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green.svg)](https://nodejs.org/)
+[![GitHub Pages](https://img.shields.io/badge/Demo-Live-brightgreen.svg)](https://dharshansr.github.io/gitgenius/)
 
 ## Table of Contents
 
@@ -32,6 +33,12 @@ GitGenius is a professional command-line tool that generates intelligent, contex
 - **Cross-Platform**: Full support for Windows, macOS, and Linux
 - **Clipboard Integration**: Quick copy functionality
 - **Previous Message Retrieval**: Access and amend previous commits
+- **🆕 Robust Git Integration**: Advanced Git state detection and error handling
+  - Detached HEAD detection and warnings
+  - Merge conflict detection with resolution hints
+  - Dirty workspace validation before operations
+  - Git worktrees and submodules support
+  - CI/CD-friendly error codes and messages
 
 ## Installation
 
@@ -63,6 +70,22 @@ npm update -g @dharshansr/gitgenius
 
 ## Configuration
 
+### Quick Start with Templates
+
+Get started quickly with pre-configured templates:
+
+```bash
+# Apply a template for quick setup
+gitgenius config --template default      # OpenAI GPT-3.5 (recommended)
+gitgenius config --template gemini       # Google Gemini Pro
+gitgenius config --template openai-gpt4  # OpenAI GPT-4 (detailed)
+gitgenius config --template concise      # Short, concise messages
+gitgenius config --template detailed     # Long, detailed messages
+
+# Then set your API key
+gitgenius config apiKey
+```
+
 ### Initial Setup
 
 1. **Set up your AI provider API key:**
@@ -82,6 +105,51 @@ gitgenius config provider
 ```bash
 gitgenius config model
 ```
+
+### Advanced Configuration Management
+
+GitGenius provides powerful configuration management features:
+
+#### Validation
+```bash
+gitgenius config --validate    # Check configuration for errors
+```
+
+#### Backup & Restore
+```bash
+gitgenius config --backup                    # Create backup
+gitgenius config --restore backup-file.json  # Restore from backup
+```
+
+#### Import & Export
+```bash
+gitgenius config --export my-config.json   # Export to share
+gitgenius config --import team-config.json # Import team settings
+```
+
+#### Migration
+```bash
+gitgenius config --migrate    # Manually migrate to latest version
+```
+
+### Configuration Inheritance
+
+GitGenius uses a three-level configuration system:
+
+1. **Global** - System-wide settings (lowest priority)
+   - Location: `~/.config/gitgenius/` (Linux/macOS) or `%APPDATA%/gitgenius/` (Windows)
+   - Use for default settings across all projects
+
+2. **User** - User-specific settings (medium priority)
+   - Same location as global, but can override specific values
+   - Use for personal preferences
+
+3. **Project** - Project-specific settings (highest priority)
+   - Location: `.gitgenius/config.json` in your git repository
+   - Use for team or project-specific requirements
+   - Overrides both user and global settings
+
+Example use case: Set OpenAI as your global provider, but use Gemini for a specific project by creating a project config in that repository.
 
 ### API Key Configuration
 
@@ -204,6 +272,9 @@ gitgenius -t feat
 # Copy to clipboard
 gitgenius -c
 
+# Preview without applying (dry run)
+gitgenius --dry-run
+
 # Combine options
 gitgenius -t fix -a -c
 ```
@@ -218,6 +289,7 @@ gitgenius -t fix -a -c
 | `gitgenius -a, --apply` | Generate and commit | `gitgenius -a` |
 | `gitgenius -c, --copy` | Copy to clipboard | `gitgenius -c` |
 | `gitgenius -t, --type <type>` | Specify commit type | `gitgenius -t feat` |
+| `gitgenius --dry-run` | Preview commit message | `gitgenius --dry-run` |
 
 ### Branch Management
 
@@ -236,6 +308,20 @@ gitgenius -t fix -a -c
 | `gitgenius config provider` | Set AI provider | `gitgenius config provider` |
 | `gitgenius config model` | Set AI model | `gitgenius config model` |
 | `gitgenius config --reset` | Reset configuration | `gitgenius config --reset` |
+| `gitgenius config --validate` | Validate configuration | `gitgenius config --validate` |
+| `gitgenius config --backup` | Backup configuration | `gitgenius config --backup` |
+| `gitgenius config --restore <file>` | Restore from backup | `gitgenius config --restore backup.json` |
+| `gitgenius config --template <name>` | Apply template | `gitgenius config --template gemini` |
+| `gitgenius config --export <file>` | Export configuration | `gitgenius config --export config.json` |
+| `gitgenius config --import <file>` | Import configuration | `gitgenius config --import config.json` |
+
+**Configuration Templates:**
+- `default` - Default OpenAI GPT-3.5 configuration
+- `openai-gpt4` - GPT-4 for detailed messages
+- `gemini` - Google Gemini Pro configuration
+- `concise` - Concise messages with lower token limit
+- `detailed` - Detailed messages with higher token limit
+- `conventional` - Strict conventional commits format
 
 ### Statistics and Analytics
 
@@ -252,6 +338,28 @@ gitgenius -t fix -a -c
 | `gitgenius template --list` | List templates | `gitgenius template --list` |
 | `gitgenius template --add <name>` | Create template | `gitgenius template --add feat` |
 | `gitgenius template --use <name>` | Use template | `gitgenius template --use feat` |
+
+### Git State & Diagnostics
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `gitgenius state` | Show repository state | `gitgenius state` |
+| `gitgenius state --validate` | Validate Git environment | `gitgenius state --validate` |
+| `gitgenius state --worktrees` | Show worktree details | `gitgenius state --worktrees` |
+| `gitgenius state --submodules` | Show submodule details | `gitgenius state --submodules` |
+
+**State Information Shown:**
+- Current branch or detached HEAD status
+- Uncommitted changes detection
+- Staged changes status
+- Untracked files presence
+- Merge/rebase in progress warnings
+- Merge conflict detection
+- Worktree information
+- Submodule status
+- Git environment validation
+
+📖 **[Learn more about Git Integration](docs/GIT_INTEGRATION.md)**
 
 ## Supported Commit Types
 
@@ -292,6 +400,22 @@ GitGenius supports conventional commit standards:
 - Check internet connection
 - Verify API key has sufficient credits
 - Try different model: `gitgenius config model`
+
+**"Detached HEAD state"**
+- Create a branch: `git checkout -b my-branch`
+- Return to a branch: `git checkout main`
+- Check state: `gitgenius state`
+
+**"Merge conflicts detected"**
+- View conflicts: `gitgenius state`
+- Resolve conflicts in files
+- Stage resolved files: `git add <file>`
+- Complete merge: `git commit`
+
+**"Cannot proceed: uncommitted changes"**
+- Commit changes: `git commit -am "message"`
+- Stash changes: `git stash`
+- Check state: `gitgenius state`
 
 ### Debug Mode
 
@@ -443,11 +567,31 @@ gitgenius checkout                # Interactive branch checkout
 
 #### Configuration
 ```bash
-gitgenius config                  # Show all config
-gitgenius config provider         # Set AI provider
-gitgenius config model            # Set AI model
-gitgenius config --reset          # Reset configuration
+gitgenius config                    # Show all config
+gitgenius config provider           # Set AI provider
+gitgenius config model              # Set AI model
+gitgenius config --reset            # Reset configuration
+gitgenius config --validate         # Validate configuration
+gitgenius config --backup           # Backup configuration
+gitgenius config --restore file.json # Restore from backup
+gitgenius config --template gemini  # Apply Gemini template
+gitgenius config --export file.json # Export configuration
 ```
+
+**Configuration Inheritance:**
+GitGenius uses a three-level configuration system:
+- **Global**: System-wide settings (lowest priority)
+- **User**: User-specific settings (medium priority)  
+- **Project**: Project-specific settings in `.gitgenius/` (highest priority)
+
+**Configuration Templates:**
+Quick setup with pre-configured templates:
+- `default` - OpenAI GPT-3.5 (balanced)
+- `openai-gpt4` - GPT-4 (detailed)
+- `gemini` - Google Gemini Pro
+- `concise` - Short messages
+- `detailed` - Long messages
+- `conventional` - Strict format
 
 #### Templates
 ```bash

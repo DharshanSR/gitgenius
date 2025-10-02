@@ -3,7 +3,7 @@ import ora from 'ora';
 import { GitService } from '../services/GitService.js';
 import { AIService } from '../services/AIService.js';
 import { ConfigManager } from '../core/ConfigManager.js';
-import { StatsOptions, UpdateOptions } from '../types.js';
+import { StatsOptions, UpdateOptions, GitStateOptions } from '../types.js';
 
 export class SystemOperations {
   private gitService: GitService;
@@ -118,6 +118,84 @@ export class SystemOperations {
       
     } catch (error) {
       throw new Error(`Failed to show identity: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async showGitState(options: GitStateOptions): Promise<void> {
+    try {
+      await this.gitService.ensureGitRepo();
+      
+      const stateManager = this.gitService.getStateManager();
+      
+      // Display main state
+      await stateManager.displayState();
+      
+      // Validate environment if requested
+      if (options.validate) {
+        console.log(chalk.blue('\n🔍 Environment Validation:'));
+        const validation = await stateManager.validateEnvironment();
+        
+        if (validation.valid) {
+          console.log(chalk.green('  ✓ All checks passed'));
+        } else {
+          console.log(chalk.yellow('  ⚠ Issues found:'));
+          validation.errors.forEach(err => {
+            console.log(chalk.yellow(`    • ${err}`));
+          });
+        }
+      }
+      
+      // Show worktree details if requested
+      if (options.worktrees) {
+        const worktrees = await stateManager.getWorktrees();
+        console.log(chalk.blue('\n📁 Worktrees:'));
+        
+        if (worktrees.length === 0) {
+          console.log(chalk.gray('  No additional worktrees'));
+        } else {
+          worktrees.forEach(wt => {
+            const marker = wt.isMain ? '(main)' : '';
+            console.log(chalk.white(`  • ${wt.path} ${marker}`));
+            console.log(chalk.gray(`    Branch: ${wt.branch || 'detached'}`));
+            console.log(chalk.gray(`    Commit: ${wt.commit.substring(0, 7)}`));
+          });
+        }
+      }
+      
+      // Show submodule details if requested
+      if (options.submodules) {
+        const submodules = await stateManager.getSubmodules();
+        console.log(chalk.blue('\n📦 Submodules:'));
+        
+        if (submodules.length === 0) {
+          console.log(chalk.gray('  No submodules configured'));
+        } else {
+          submodules.forEach(sm => {
+            const status = sm.isInitialized ? chalk.green('initialized') : chalk.yellow('not initialized');
+            console.log(chalk.white(`  • ${sm.path} [${status}]`));
+            if (sm.url) {
+              console.log(chalk.gray(`    URL: ${sm.url}`));
+            }
+            if (sm.branch) {
+              console.log(chalk.gray(`    Branch: ${sm.branch}`));
+            }
+            console.log(chalk.gray(`    Commit: ${sm.commit.substring(0, 7)}`));
+          });
+        }
+      }
+      
+      // Show conflict resolution hints if there are conflicts
+      const state = await stateManager.getState();
+      if (state.hasConflicts) {
+        console.log(chalk.yellow('\n⚠ Conflict Resolution:'));
+        const hints = await stateManager.getConflictResolutionHints();
+        hints.forEach(hint => {
+          console.log(chalk.yellow(`  ${hint}`));
+        });
+      }
+      
+    } catch (error) {
+      throw new Error(`Failed to show Git state: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

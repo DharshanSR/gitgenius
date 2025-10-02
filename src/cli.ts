@@ -6,6 +6,17 @@ import { GitGenius } from './core/GitGeniusCore.js';
 import { ConfigManager } from './core/ConfigManager.js';
 import { BranchManager } from './core/BranchManager.js';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '..', 'package.json'), 'utf8')
+);
 
 const program = new Command();
 const gitGenius = new GitGenius();
@@ -15,7 +26,7 @@ const branchManager = new BranchManager();
 program
   .name('gitgenius')
   .description('AI-powered commit message generator with enhanced features')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 // Main command - generate commit message
 program
@@ -27,6 +38,7 @@ program
   .option('-t, --type <type>', 'Specify the commit type (feat, fix, chore, etc.)')
   .option('-p, --provider <provider>', 'AI provider to use (openai, gemini, anthropic)')
   .option('-d, --detailed', 'Generate detailed commit message with body')
+  .option('--dry-run', 'Generate commit message without applying changes')
   .action(async (options) => {
     try {
       await gitGenius.generateCommit(options);
@@ -61,6 +73,13 @@ program
   .argument('[value]', 'Configuration value')
   .option('--reset', 'Reset all configuration')
   .option('--list', 'List all configuration')
+  .option('--backup', 'Backup current configuration')
+  .option('--restore <file>', 'Restore configuration from backup')
+  .option('--validate', 'Validate current configuration')
+  .option('--template <name>', 'Apply a configuration template')
+  .option('--export <file>', 'Export configuration to file')
+  .option('--import <file>', 'Import configuration from file')
+  .option('--migrate', 'Manually migrate configuration')
   .action(async (key, value, options) => {
     try {
       await configManager.handleConfig(key, value, options);
@@ -322,6 +341,22 @@ program
   .action(async () => {
     try {
       await gitGenius.showWhoami();
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+// Git state command - Show detailed Git state
+program
+  .command('state')
+  .description('Show detailed Git repository state')
+  .option('--validate', 'Validate Git environment')
+  .option('--worktrees', 'Show worktree information')
+  .option('--submodules', 'Show submodule information')
+  .action(async (options) => {
+    try {
+      await gitGenius.showGitState(options);
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
       process.exit(1);

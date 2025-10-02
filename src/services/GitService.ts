@@ -1,12 +1,16 @@
 import simpleGit, { SimpleGit } from 'simple-git';
 import chalk from 'chalk';
 import { GitStats } from '../types.js';
+import { GitStateManager } from '../utils/GitStateManager.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class GitService {
   private git: SimpleGit;
+  private stateManager: GitStateManager;
 
   constructor() {
     this.git = simpleGit();
+    this.stateManager = new GitStateManager();
   }
 
   async checkIsRepo(): Promise<boolean> {
@@ -21,12 +25,35 @@ export class GitService {
   }
 
   async getCurrentBranch(): Promise<string> {
-    const status = await this.git.status();
-    return status.current || 'main';
+    try {
+      const status = await this.git.status();
+      
+      // Check for detached HEAD
+      if (status.detached || !status.current) {
+        const state = await this.stateManager.getState();
+        console.log(chalk.yellow('⚠ Warning: Detached HEAD state detected'));
+        console.log(chalk.yellow(`Currently at commit: ${state.currentCommit}`));
+        return state.currentCommit;
+      }
+      
+      return status.current || 'main';
+    } catch (error) {
+      throw ErrorHandler.gitError(
+        `Failed to get current branch: ${error instanceof Error ? error.message : String(error)}`,
+        ['Ensure you are in a Git repository', 'Check Git configuration']
+      );
+    }
   }
 
   async getStatus() {
-    return await this.git.status();
+    try {
+      return await this.git.status();
+    } catch (error) {
+      throw ErrorHandler.gitError(
+        `Failed to get status: ${error instanceof Error ? error.message : String(error)}`,
+        ['Ensure you are in a Git repository', 'Check for repository corruption']
+      );
+    }
   }
 
   async getDiff(options: string[] = []): Promise<string> {
@@ -34,7 +61,22 @@ export class GitService {
   }
 
   async getStagedDiff(): Promise<string> {
-    return await this.git.diff(['--staged']);
+    try {
+      // Check for conflicts before showing diff
+      const state = await this.stateManager.getState();
+      if (state.hasConflicts) {
+        console.log(chalk.yellow('⚠ Warning: Merge conflicts detected'));
+        const hints = await this.stateManager.getConflictResolutionHints();
+        hints.forEach(hint => console.log(chalk.yellow(hint)));
+      }
+      
+      return await this.git.diff(['--staged']);
+    } catch (error) {
+      throw ErrorHandler.gitError(
+        `Failed to get staged diff: ${error instanceof Error ? error.message : String(error)}`,
+        ['Check if there are staged changes: git status']
+      );
+    }
   }
 
   async getLastCommitDiff(): Promise<string> {
@@ -46,7 +88,33 @@ export class GitService {
   }
 
   async commit(message: string, options?: any): Promise<void> {
-    await this.git.commit(message, undefined, options);
+    try {
+      // Validate environment before committing
+      const validation = await this.stateManager.validateEnvironment();
+      if (!validation.valid) {
+        console.log(chalk.yellow('⚠ Environment warnings:'));
+        validation.errors.forEach(err => console.log(chalk.yellow(`  • ${err}`)));
+      }
+
+      // Check for conflicts
+      const state = await this.stateManager.getState();
+      if (state.hasConflicts) {
+        throw ErrorHandler.gitError(
+          'Cannot commit: merge conflicts detected',
+          await this.stateManager.getConflictResolutionHints()
+        );
+      }
+
+      await this.git.commit(message, undefined, options);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('nothing to commit')) {
+        throw ErrorHandler.gitError(
+          'Nothing to commit',
+          ['Stage changes first: git add <file>', 'Check status: git status']
+        );
+      }
+      throw error;
+    }
   }
 
   async reset(options: string[] = []): Promise<void> {
@@ -67,6 +135,50 @@ export class GitService {
 
   async addConfig(key: string, value: string): Promise<void> {
     await this.git.addConfig(key, value);
+  }
+
+  // New methods for enhanced Git operations
+
+  /**
+   * Get Git state manager
+   */
+  getStateManager(): GitStateManager {
+    return this.stateManager;
+  }
+
+  /**
+   * Check workspace cleanliness before operations
+   */
+  async ensureCleanWorkspace(allowStaged: boolean = false): Promise<void> {
+    await this.stateManager.ensureCleanWorkspace(allowStaged);
+  }
+
+  /**
+   * Check for detached HEAD and handle appropriately
+   */
+  async checkDetachedHead(): Promise<boolean> {
+    return await this.stateManager.isDetachedHead();
+  }
+
+  /**
+   * Get worktree information
+   */
+  async getWorktrees() {
+    return await this.stateManager.getWorktrees();
+  }
+
+  /**
+   * Get submodule information
+   */
+  async getSubmodules() {
+    return await this.stateManager.getSubmodules();
+  }
+
+  /**
+   * Display current Git state
+   */
+  async displayState(): Promise<void> {
+    await this.stateManager.displayState();
   }
 
   calculateStats(logs: any): GitStats {
