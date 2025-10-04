@@ -1,8 +1,8 @@
 /**
  * Error tracking system with comprehensive error monitoring
  */
-import { logger } from './Logger';
-import { ConfigManager } from '../core/ConfigManager';
+import { logger } from './Logger.js';
+import { ConfigManager } from '../core/ConfigManager.js';
 import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
