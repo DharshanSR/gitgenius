@@ -424,12 +424,92 @@ Enable detailed logging:
 **Windows (PowerShell):**
 ```powershell
 $env:DEBUG = "gitgenius*"; gitgenius
+# or
+$env:LOG_LEVEL = "debug"; gitgenius
 ```
 
 **macOS/Linux:**
 ```bash
 DEBUG=gitgenius* gitgenius
+# or
+LOG_LEVEL=debug gitgenius
 ```
+
+**Using CLI:**
+```bash
+# Enable debug mode
+gitgenius debug --enable
+
+# Disable debug mode
+gitgenius debug --disable
+
+# Check debug status
+gitgenius debug --status
+
+# View performance metrics
+gitgenius debug --performance
+```
+
+### Logging and Monitoring
+
+GitGenius includes comprehensive logging and debugging infrastructure:
+
+**View Logs:**
+```bash
+# Show recent logs (last 50 entries)
+gitgenius logs
+
+# Show specific number of lines
+gitgenius logs --lines 100
+
+# Show log statistics
+gitgenius logs --stats
+
+# Export logs to file
+gitgenius logs --export logs.json
+
+# Set log level
+gitgenius logs --level debug  # trace, debug, info, warn, error
+
+# Clear all logs
+gitgenius logs --clear
+```
+
+**Error Tracking:**
+```bash
+# List unresolved errors
+gitgenius errors
+
+# Show error statistics
+gitgenius errors --stats
+
+# Include resolved errors
+gitgenius errors --resolved
+
+# Filter by category
+gitgenius errors --category git
+
+# Export errors to file
+gitgenius errors --export errors.json
+
+# Clear resolved errors
+gitgenius errors --clear --resolved
+
+# Clear all errors
+gitgenius errors --clear
+```
+
+**Log Files Location:**
+- Logs: `~/.gitgenius/logs/gitgenius.log`
+- Errors: `~/.gitgenius/errors/errors.json`
+
+**Features:**
+- Structured logging with multiple levels
+- Automatic log rotation (10MB per file, max 5 files)
+- Performance metrics tracking
+- Error tracking with occurrence counting
+- Debug mode with verbose output
+- Console and file logging
 
 ### Reset Configuration
 

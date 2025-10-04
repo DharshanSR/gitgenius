@@ -2,6 +2,8 @@
  * Professional error handler with detailed error information
  */
 import chalk from 'chalk';
+import { logger } from './Logger.js';
+import { errorTracker } from './ErrorTracker.js';
 
 export class GitGeniusError extends Error {
   constructor(
@@ -27,6 +29,12 @@ export class ErrorHandler {
   }
 
   private static handleGitGeniusError(error: GitGeniusError): void {
+    // Track error
+    errorTracker.trackError(error.category, error.message, error, { 
+      code: error.code,
+      suggestions: error.suggestions 
+    });
+
     console.error(chalk.red(`[${error.category.toUpperCase()}] ${error.message}`));
     
     if (error.suggestions.length > 0) {
@@ -41,9 +49,12 @@ export class ErrorHandler {
   }
 
   private static handleGenericError(error: Error): void {
+    // Track error
+    errorTracker.trackError('error', error.message, error);
+
     console.error(chalk.red(`[ERROR] ${error.message}`));
     
-    if (process.env.DEBUG) {
+    if (process.env.DEBUG || logger.getLogLevel() === 'debug') {
       console.error(chalk.gray(error.stack));
     }
     
@@ -51,6 +62,9 @@ export class ErrorHandler {
   }
 
   private static handleUnknownError(error: unknown): void {
+    // Track error
+    errorTracker.trackError('unknown', 'An unexpected error occurred', undefined, { error: String(error) });
+
     console.error(chalk.red('[ERROR] An unexpected error occurred'));
     console.error(chalk.gray(String(error)));
     process.exit(1);

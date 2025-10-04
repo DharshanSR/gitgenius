@@ -123,6 +123,31 @@ export interface GitStateOptions {
   submodules?: boolean;
 }
 
+export interface LogCommandOptions {
+  level?: string;
+  lines?: string;
+  clear?: boolean;
+  stats?: boolean;
+  tail?: boolean;
+  export?: string;
+}
+
+export interface ErrorCommandOptions {
+  list?: boolean;
+  stats?: boolean;
+  clear?: boolean;
+  resolved?: boolean;
+  category?: string;
+  export?: string;
+}
+
+export interface DebugCommandOptions {
+  enable?: boolean;
+  disable?: boolean;
+  status?: boolean;
+  performance?: boolean;
+}
+
 export interface AIProvider {
   name: string;
   generateCommitMessage(diff: string, type?: string, detailed?: boolean): Promise<string>;
