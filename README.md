@@ -8,16 +8,10 @@
     <img src="https://img.shields.io/badge/-Node.js-black?style=for-the-badge&logoColor=white&logo=node.js&color=339933"/>
     <img src="https://img.shields.io/badge/-OpenAI-black?style=for-the-badge&logoColor=white&logo=openai&color=412991"/>
     <img src="https://img.shields.io/badge/-Google_Gemini-black?style=for-the-badge&logoColor=white&logo=google&color=4285F4"/>
-    <br/>
     <img src="https://img.shields.io/badge/-Git-black?style=for-the-badge&logoColor=white&logo=git&color=F05032"/>
     <img src="https://img.shields.io/badge/-npm-black?style=for-the-badge&logoColor=white&logo=npm&color=CB3837"/>
     <img src="https://img.shields.io/badge/-CLI-black?style=for-the-badge&logoColor=white&logo=windows-terminal&color=4D4D4D"/>
   </div>
-
-  <h1>GitGenius</h1>
-  <p><strong>AI-Powered Commit Message Generator</strong></p>
-  
-  <p>A professional command-line tool that generates intelligent, context-aware commit messages using AI. Built for developers who value code quality and clear commit history.</p>
 
   [![npm version](https://badge.fury.io/js/@dharshansr%2Fgitgenius.svg)](https://badge.fury.io/js/@dharshansr/gitgenius)
   [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
