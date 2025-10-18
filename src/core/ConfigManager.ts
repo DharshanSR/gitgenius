@@ -3,16 +3,27 @@ import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { homedir } from 'os';
+import crypto from 'crypto';
 import { ConfigOptions, ConfigBackup, ConfigLevel } from '../types.js';
 import { validateConfig, migrateConfig, needsMigration, CONFIG_VERSION } from './ConfigSchema.js';
 import { getTemplate, listTemplates } from './ConfigTemplates.js';
+import { SecurityUtils } from '../utils/SecurityUtils.js';
+import { SecurityManager } from './SecurityConfig.js';
 
 export class ConfigManager {
   private config: Conf<any>;
   private globalConfig: Conf<any>;
   private projectConfig: Conf<any> | null = null;
+  private securityManager: SecurityManager;
+  private encryptionKey: string;
 
   constructor() {
+    this.securityManager = new SecurityManager();
+    
+    // Generate or retrieve encryption key for API keys
+    this.encryptionKey = this.getOrCreateEncryptionKey();
+    
     // Global configuration (system-wide)
     this.globalConfig = new Conf({
       projectName: 'gitgenius',
@@ -33,6 +44,38 @@ export class ConfigManager {
 
     // Auto-migrate if needed
     this.autoMigrate();
+  }
+  
+  /**
+   * Get or create encryption key for secure API key storage
+   */
+  private getOrCreateEncryptionKey(): string {
+    const keyPath = join(homedir(), '.gitgenius', '.key');
+    
+    try {
+      if (existsSync(keyPath)) {
+        return readFileSync(keyPath, 'utf8').trim();
+      } else {
+        // Generate new key
+        const key = crypto.randomBytes(32).toString('hex');
+        const keyDir = join(homedir(), '.gitgenius');
+        
+        // Create directory if it doesn't exist
+        if (!existsSync(keyDir)) {
+          const { mkdirSync } = require('fs');
+          mkdirSync(keyDir, { recursive: true, mode: 0o700 });
+        }
+        
+        // Write key file with restricted permissions
+        writeFileSync(keyPath, key, { mode: 0o600 });
+        return key;
+      }
+    } catch (error) {
+      // Fallback to a machine-specific key
+      return crypto.createHash('sha256')
+        .update(homedir() + process.platform)
+        .digest('hex');
+    }
   }
 
   private getDefaultConfig() {
@@ -448,11 +491,25 @@ export class ConfigManager {
         type: 'password',
         name: 'apiKey',
         message: 'Enter your API key:',
-        mask: '*'
+        mask: '*',
+        validate: (input: string) => {
+          if (!SecurityUtils.validateApiKey(input)) {
+            return 'Invalid API key format. API key must be at least 20 characters.';
+          }
+          return true;
+        }
       }
     ]);
 
-    this.setConfig('apiKey', apiKey);
+    // Encrypt the API key before storing
+    const encryptedKey = SecurityUtils.encrypt(apiKey, this.encryptionKey);
+    this.setConfig('apiKey', encryptedKey);
+    this.setConfig('apiKeyEncrypted', true);
+    
+    // Audit log
+    this.securityManager.auditLog('api_key_updated', {
+      timestamp: new Date().toISOString()
+    });
   }
 
   private async setProvider(): Promise<void> {
@@ -545,8 +602,43 @@ export class ConfigManager {
     // Check environment variables with different possible names
     const envKey = process.env.GITGENIUS_API_KEY || 
                    process.env.OPENAI_API_KEY || 
-                   process.env.GEMINI_API_KEY ||
-                   this.getConfig('apiKey');
-    return envKey;
+                   process.env.GEMINI_API_KEY;
+    
+    if (envKey) {
+      // Environment variables are not encrypted
+      return envKey;
+    }
+    
+    // Get from config
+    const storedKey = this.getConfig('apiKey');
+    const isEncrypted = this.getConfig('apiKeyEncrypted');
+    
+    if (!storedKey) {
+      return '';
+    }
+    
+    // Decrypt if encrypted
+    if (isEncrypted) {
+      try {
+        return SecurityUtils.decrypt(storedKey, this.encryptionKey);
+      } catch (error) {
+        console.error(chalk.yellow('⚠ Failed to decrypt API key. Please reconfigure.'));
+        return '';
+      }
+    }
+    
+    // Legacy unencrypted key - migrate it
+    if (storedKey && !isEncrypted) {
+      try {
+        const encryptedKey = SecurityUtils.encrypt(storedKey, this.encryptionKey);
+        this.setConfig('apiKey', encryptedKey);
+        this.setConfig('apiKeyEncrypted', true);
+      } catch (error) {
+        // If encryption fails, continue with unencrypted key
+        console.warn(chalk.yellow('⚠ Could not encrypt API key'));
+      }
+    }
+    
+    return storedKey;
   }
 }
