@@ -1,4 +1,4 @@
-import { SecurityUtils } from '../utils/SecurityUtils';
+import { SecurityUtils } from '../utils/SecurityUtils.js';
 
 /**
  * Security configuration and policies

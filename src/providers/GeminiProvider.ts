@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { AIProvider } from '../types.js';
-import { SecurityUtils } from '../utils/SecurityUtils';
-import { SecurityManager } from '../core/SecurityConfig';
+import { SecurityUtils } from '../utils/SecurityUtils.js';
+import { SecurityManager } from '../core/SecurityConfig.js';
 
 export class GeminiProvider implements AIProvider {
   name = 'gemini';

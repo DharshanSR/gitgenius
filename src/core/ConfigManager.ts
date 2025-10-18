@@ -8,8 +8,8 @@ import crypto from 'crypto';
 import { ConfigOptions, ConfigBackup, ConfigLevel } from '../types.js';
 import { validateConfig, migrateConfig, needsMigration, CONFIG_VERSION } from './ConfigSchema.js';
 import { getTemplate, listTemplates } from './ConfigTemplates.js';
-import { SecurityUtils } from '../utils/SecurityUtils';
-import { SecurityManager } from './SecurityConfig';
+import { SecurityUtils } from '../utils/SecurityUtils.js';
+import { SecurityManager } from './SecurityConfig.js';
 
 export class ConfigManager {
   private config: Conf<any>;
