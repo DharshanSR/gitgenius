@@ -1,4 +1,5 @@
 import inquirer from 'inquirer';
+import { editor } from '@inquirer/prompts';
 import chalk from 'chalk';
 import clipboardy from 'clipboardy';
 import ora from 'ora';
@@ -115,14 +116,10 @@ export class CommitHandler {
   }
 
   private async editCommitMessage(): Promise<void> {
-    const { editedMessage } = await inquirer.prompt([
-      {
-        type: 'editor',
-        name: 'editedMessage',
-        message: 'Edit the commit message:',
-        default: this.lastCommitMessage
-      }
-    ]);
+    const editedMessage = await editor({
+      message: 'Edit the commit message:',
+      default: this.lastCommitMessage || ''
+    });
 
     this.lastCommitMessage = editedMessage.trim();
   }
