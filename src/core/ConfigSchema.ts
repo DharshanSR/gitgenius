@@ -34,7 +34,7 @@ export function validateConfig(config: any): { valid: boolean; errors?: string[]
   
   return {
     valid: false,
-    errors: result.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`)
+    errors: result.error.issues.map((issue: z.ZodIssue) => `${issue.path.join('.')}: ${issue.message}`)
   };
 }
 
