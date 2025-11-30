@@ -5,7 +5,7 @@ Thank you for considering contributing to GitGenius! We welcome all types of con
 ## Getting Started
 
 ### Prerequisites
-- Node.js 16+ 
+- Node.js 20+ 
 - npm or yarn
 - Git
 

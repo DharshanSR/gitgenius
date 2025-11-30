@@ -1,6 +1,6 @@
 # 🚀 GitGenius Commands Reference
 
-Complete overview of all available commands in GitGenius v1.0.0
+Complete overview of all available commands in GitGenius v1.4.0
 
 ---
 
@@ -32,6 +32,15 @@ Complete overview of all available commands in GitGenius v1.0.0
 - [`template`](#template) - Manage commit message templates
 - [`alias`](#alias) - Custom command aliases
 
+### **🔀 Pull Requests**
+- [`pr`](#pr) - Create AI-powered pull requests
+
+### **📝 Logging & Debugging**
+- [`logs`](#logs) - View and manage GitGenius logs
+- [`errors`](#errors) - Track and manage errors
+- [`debug`](#debug) - Debug mode and performance monitoring
+- [`state`](#state) - Show detailed Git repository state
+
 ### **🛠️ System**
 - [`feedback`](#feedback) - Send feedback and bug reports
 - [`update`](#update) - Check for updates
@@ -60,6 +69,7 @@ gitgenius -t docs -e -p gemini
 - `-e, --edit` - Enable interactive editing
 - `-t, --type <type>` - Specify commit type (feat, fix, docs, etc.)
 - `-p, --provider <provider>` - AI provider (openai, gemini, anthropic)
+- `-d, --detailed` - Generate detailed commit message with body
 - `--dry-run` - Generate commit message without applying changes
 
 **Examples:**
@@ -431,6 +441,137 @@ gitgenius alias --remove "old-alias"    # Remove alias
 
 ---
 
+## 🔀 **Pull Request Commands**
+
+### `pr`
+Create AI-powered pull requests with intelligent descriptions.
+
+```bash
+gitgenius pr
+gitgenius pr --title "Add new feature" --target main
+gitgenius pr --draft --reviewers "john,jane"
+```
+
+**Aliases:** `pull-request`
+
+**Options:**
+- `-t, --title <title>` - PR title
+- `-b, --body <body>` - PR body/description
+- `--draft` - Create as draft PR
+- `--target <branch>` - Target branch (default: main)
+- `--source <branch>` - Source branch (default: current branch)
+- `-r, --reviewers <reviewers>` - Comma-separated list of reviewers
+
+**Examples:**
+```bash
+gitgenius pr                            # Interactive PR creation
+gitgenius pr --title "Fix login bug"   # Set PR title
+gitgenius pr --draft --target develop  # Create draft PR to develop
+gitgenius pr -r "alice,bob"            # Request reviewers
+```
+
+---
+
+## 📝 **Logging & Debugging Commands**
+
+### `logs`
+View and manage GitGenius logs for monitoring and troubleshooting.
+
+```bash
+gitgenius logs
+gitgenius logs --lines 100 --export logs.json
+```
+
+**Options:**
+- `-l, --level <level>` - Set log level (trace, debug, info, warn, error)
+- `-n, --lines <count>` - Number of log lines to show (default: 50)
+- `--clear` - Clear all logs
+- `--stats` - Show log statistics
+- `--tail` - Tail logs (watch mode)
+- `--export <file>` - Export logs to file
+
+**Examples:**
+```bash
+gitgenius logs                          # Show recent logs
+gitgenius logs --lines 100             # Show last 100 lines
+gitgenius logs --stats                 # View log statistics
+gitgenius logs --level debug           # Set log level to debug
+gitgenius logs --export debug.json     # Export logs to file
+gitgenius logs --clear                 # Clear all logs
+```
+
+### `errors`
+Track and manage errors for troubleshooting and debugging.
+
+```bash
+gitgenius errors
+gitgenius errors --stats --category git
+```
+
+**Options:**
+- `-l, --list` - List errors (default)
+- `--stats` - Show error statistics
+- `--clear` - Clear errors
+- `--resolved` - Include resolved errors
+- `--category <category>` - Filter by error category (git, ai, config, network, user)
+- `--export <file>` - Export errors to file
+
+**Examples:**
+```bash
+gitgenius errors                        # List unresolved errors
+gitgenius errors --stats               # View error statistics
+gitgenius errors --category git        # Filter by git errors
+gitgenius errors --resolved            # Show all errors including resolved
+gitgenius errors --export report.json  # Export errors
+gitgenius errors --clear               # Clear all errors
+```
+
+### `debug`
+Debug mode and performance monitoring for troubleshooting.
+
+```bash
+gitgenius debug
+gitgenius debug --enable --performance
+```
+
+**Options:**
+- `--enable` - Enable debug mode
+- `--disable` - Disable debug mode
+- `--status` - Show debug status (default)
+- `--performance` - Show performance metrics
+
+**Examples:**
+```bash
+gitgenius debug                         # Show debug status
+gitgenius debug --enable               # Enable verbose logging
+gitgenius debug --disable              # Return to normal logging
+gitgenius debug --performance          # View performance metrics
+```
+
+### `state`
+Show detailed Git repository state including worktrees and submodules.
+
+```bash
+gitgenius state
+gitgenius state --validate --worktrees
+```
+
+**Options:**
+- `--validate` - Validate Git environment
+- `--worktrees` - Show worktree information
+- `--submodules` - Show submodule information
+
+**Examples:**
+```bash
+gitgenius state                         # Show repository state
+gitgenius state --validate             # Validate Git environment
+gitgenius state --worktrees            # Show worktree details
+gitgenius state --submodules           # Show submodule status
+gitgenius state --validate --worktrees --submodules  # Show all info
+```
+
+---
+
 ## 🛠️ **System Commands**
 
 ### `feedback`
@@ -479,6 +620,15 @@ gitgenius log --ai -n 5                # AI-enhanced git log
 gitgenius suggest --type                # AI commit type suggestions
 gitgenius template --add "custom"       # Custom templates
 gitgenius history --export report.json  # Export message history
+gitgenius pr --draft --target develop   # Create draft PR
+```
+
+### **Debugging & Monitoring Commands:**
+```bash
+gitgenius logs --lines 100             # View recent logs
+gitgenius errors --stats               # Error statistics
+gitgenius debug --enable               # Enable debug mode
+gitgenius state --validate             # Validate Git environment
 ```
 
 ### **Team Commands:**
@@ -503,6 +653,6 @@ gg config                               # Same as gitgenius config
 
 ---
 
-**Total Commands: 17 main commands + numerous options and flags**
+**Total Commands: 22 main commands + numerous options and flags**
 
 Each command is designed to work together as part of a professional AI-powered git workflow! ✨
