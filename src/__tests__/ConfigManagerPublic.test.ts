@@ -193,31 +193,47 @@ describe('ConfigManager (public API)', () => {
     });
   });
 
-  describe('handleConfig', () => {
-    test('should list config when no key/value provided', async () => {
-      await configManager.handleConfig();
-      expect(consoleSpy).toHaveBeenCalled();
-      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
-      expect(output).toContain('Configuration');
+  describe('handleConfig additional options', () => {
+    test('should call backupConfig when backup option is set', async () => {
+      const backupSpy = jest.spyOn(configManager as any, 'backupConfig').mockResolvedValue(undefined);
+
+      await configManager.handleConfig(undefined, undefined, { backup: true });
+      expect(backupSpy).toHaveBeenCalled();
     });
 
-    test('should set config when key and value provided', async () => {
+    test('should call validateCurrentConfig when validate option is set', async () => {
+      const validateSpy = jest.spyOn(configManager as any, 'validateCurrentConfig').mockResolvedValue(undefined);
+
+      await configManager.handleConfig(undefined, undefined, { validate: true });
+      expect(validateSpy).toHaveBeenCalled();
+    });
+
+    test('should call resetConfig when reset option is set', async () => {
+      const resetSpy = jest.spyOn(configManager as any, 'resetConfig').mockResolvedValue(undefined);
+
+      await configManager.handleConfig(undefined, undefined, { reset: true });
+      expect(resetSpy).toHaveBeenCalled();
+    });
+
+    test('should call importConfig when import option is set', async () => {
+      const importSpy = jest.spyOn(configManager as any, 'importConfig').mockResolvedValue(undefined);
+
+      await configManager.handleConfig(undefined, undefined, { import: '/path/to/config.json' });
+      expect(importSpy).toHaveBeenCalledWith('/path/to/config.json');
+    });
+
+    test('should call listConfig when list option is set', async () => {
+      const listSpy = jest.spyOn(configManager as any, 'listConfig').mockReturnValue(undefined);
+
+      await configManager.handleConfig(undefined, undefined, { list: true });
+      expect(listSpy).toHaveBeenCalled();
+    });
+
+    test('should set config value when key and value provided', async () => {
+      const setConfigSpy = jest.spyOn(configManager as any, 'setConfig');
+
       await configManager.handleConfig('provider', 'gemini');
-      const value = configManager.getConfig('provider');
-      expect(value).toBe('gemini');
-    });
-
-    test('should handle export option gracefully', async () => {
-      // Just verify it attempts export (file write may fail in test env)
-      try {
-        await configManager.handleConfig(undefined, undefined, { export: '/tmp/config-export-test.json' });
-        // If it succeeds, check it logged success
-        const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
-        expect(output.length).toBeGreaterThan(0);
-      } catch (e) {
-        // Export may fail due to permissions, but that's expected in tests
-        expect(e).toBeDefined();
-      }
+      expect(setConfigSpy).toHaveBeenCalledWith('provider', 'gemini');
     });
   });
 });

@@ -324,4 +324,189 @@ describe('GitService', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('checkIsRepo', () => {
+    test('should return true when in a git repository', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'checkIsRepo').mockResolvedValue(true);
+
+      const result = await gitService.checkIsRepo();
+      expect(result).toBe(true);
+    });
+
+    test('should return false when not in a git repository', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'checkIsRepo').mockResolvedValue(false);
+
+      const result = await gitService.checkIsRepo();
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('ensureGitRepo', () => {
+    test('should not throw when in a git repository', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'checkIsRepo').mockResolvedValue(true);
+
+      await expect(gitService.ensureGitRepo()).resolves.toBeUndefined();
+    });
+
+    test('should throw when not in a git repository', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'checkIsRepo').mockResolvedValue(false);
+
+      await expect(gitService.ensureGitRepo()).rejects.toThrow('Not in a git repository');
+    });
+  });
+
+  describe('getCurrentBranch', () => {
+    test('should return current branch name', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'status').mockResolvedValue({ current: 'feature/test', detached: false } as any);
+
+      const branch = await gitService.getCurrentBranch();
+      expect(branch).toBe('feature/test');
+    });
+
+    test('should handle detached HEAD state', async () => {
+      const git = (gitService as any).git;
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(git, 'status').mockResolvedValue({ current: null, detached: true } as any);
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({
+        currentCommit: 'abc1234',
+        currentBranch: null
+      } as any);
+
+      const result = await gitService.getCurrentBranch();
+      expect(result).toBe('abc1234');
+    });
+
+    test('should throw on git error', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'status').mockRejectedValue(new Error('git error'));
+
+      await expect(gitService.getCurrentBranch()).rejects.toThrow('Failed to get current branch');
+    });
+  });
+
+  describe('getStatus', () => {
+    test('should return git status', async () => {
+      const git = (gitService as any).git;
+      const mockStatus = {
+        staged: ['file.ts'],
+        modified: [],
+        deleted: [],
+        not_added: [],
+        conflicted: [],
+        current: 'main'
+      };
+      jest.spyOn(git, 'status').mockResolvedValue(mockStatus as any);
+
+      const status = await gitService.getStatus();
+      expect(status).toEqual(mockStatus);
+    });
+
+    test('should throw on git error', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'status').mockRejectedValue(new Error('git error'));
+
+      await expect(gitService.getStatus()).rejects.toThrow('Failed to get status');
+    });
+  });
+
+  describe('getDiff', () => {
+    test('should return diff', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'diff').mockResolvedValue('+ new code');
+
+      const diff = await gitService.getDiff([]);
+      expect(diff).toBe('+ new code');
+    });
+  });
+
+  describe('getStagedDiff', () => {
+    test('should return staged diff', async () => {
+      const git = (gitService as any).git;
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({ hasConflicts: false } as any);
+      jest.spyOn(git, 'diff').mockResolvedValue('+ staged change');
+
+      const diff = await gitService.getStagedDiff();
+      expect(diff).toBe('+ staged change');
+    });
+
+    test('should show conflict warning when conflicts exist', async () => {
+      const git = (gitService as any).git;
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({ hasConflicts: true } as any);
+      jest.spyOn(stateManager, 'getConflictResolutionHints').mockResolvedValue(['Resolve conflicts first']);
+      jest.spyOn(git, 'diff').mockResolvedValue('');
+
+      await gitService.getStagedDiff();
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('conflict');
+    });
+  });
+
+  describe('reset', () => {
+    test('should reset using provided options', async () => {
+      const git = (gitService as any).git;
+      const resetSpy = jest.spyOn(git, 'reset').mockResolvedValue(undefined);
+
+      await gitService.reset(['HEAD']);
+      expect(resetSpy).toHaveBeenCalledWith(['HEAD']);
+    });
+  });
+
+  describe('getLog', () => {
+    test('should get log with options', async () => {
+      const git = (gitService as any).git;
+      const logSpy = jest.spyOn(git, 'log').mockResolvedValue({ total: 3, all: [] } as any);
+
+      const log = await gitService.getLog({ since: '2024-01-01' });
+      expect(logSpy).toHaveBeenCalledWith({ since: '2024-01-01' });
+    });
+  });
+
+  describe('addConfig', () => {
+    test('should add git config', async () => {
+      const git = (gitService as any).git;
+      const addConfigSpy = jest.spyOn(git, 'addConfig').mockResolvedValue(undefined);
+
+      await gitService.addConfig('user.name', 'Test User');
+      expect(addConfigSpy).toHaveBeenCalledWith('user.name', 'Test User');
+    });
+  });
+
+  describe('getWorktrees', () => {
+    test('should return worktrees from stateManager', async () => {
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'getWorktrees').mockResolvedValue([
+        { path: '/test', branch: 'main', commit: 'abc', isMain: true }
+      ]);
+
+      const worktrees = await gitService.getWorktrees();
+      expect(Array.isArray(worktrees)).toBe(true);
+    });
+  });
+
+  describe('getSubmodules', () => {
+    test('should return submodules from stateManager', async () => {
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'getSubmodules').mockResolvedValue([]);
+
+      const submodules = await gitService.getSubmodules();
+      expect(Array.isArray(submodules)).toBe(true);
+    });
+  });
+
+  describe('displayState', () => {
+    test('should call stateManager.displayState', async () => {
+      const stateManager = (gitService as any).stateManager;
+      const displaySpy = jest.spyOn(stateManager, 'displayState').mockResolvedValue(undefined);
+
+      await gitService.displayState();
+      expect(displaySpy).toHaveBeenCalled();
+    });
+  });
 });
