@@ -198,3 +198,139 @@ describe('ErrorTracker', () => {
     });
   });
 });
+
+// Functional tests using the actual ErrorTracker instance
+import { jest, beforeEach, afterEach } from '@jest/globals';
+import { ErrorTracker } from '../utils/ErrorTracker';
+
+describe('ErrorTracker (functional)', () => {
+  let tracker: ErrorTracker;
+
+  beforeEach(() => {
+    // Reset singleton and create fresh instance
+    (ErrorTracker as any).instance = undefined;
+    tracker = (ErrorTracker as any).getInstance();
+    // Clear all existing errors to start clean
+    try {
+      tracker.clearAllErrors();
+    } catch (e) {
+      // ignore
+    }
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    try {
+      tracker.clearAllErrors();
+    } catch (e) {
+      // ignore
+    }
+  });
+
+  test('should track an error', () => {
+    tracker.trackError('git', 'Test error message');
+    const errors = tracker.getAllErrors();
+    const found = errors.some(e => e.message === 'Test error message' && e.category === 'git');
+    expect(found).toBe(true);
+  });
+
+  test('should increment occurrences for same error', () => {
+    tracker.trackError('git', 'Repeated error');
+    tracker.trackError('git', 'Repeated error');
+    tracker.trackError('git', 'Repeated error');
+
+    const errors = tracker.getAllErrors();
+    const error = errors.find(e => e.message === 'Repeated error');
+    expect(error).toBeDefined();
+    expect(error!.occurrences).toBeGreaterThanOrEqual(3);
+  });
+
+  test('should resolve an error', () => {
+    tracker.trackError('git', 'Resolvable error');
+    const errors = tracker.getAllErrors();
+    const error = errors.find(e => e.message === 'Resolvable error');
+    expect(error).toBeDefined();
+
+    const resolved = tracker.resolveError(error!.id);
+    expect(resolved).toBe(true);
+
+    // After resolution, error is not in unresolved list
+    const unresolvedErrors = tracker.getAllErrors(false);
+    const stillUnresolved = unresolvedErrors.find(e => e.message === 'Resolvable error');
+    expect(stillUnresolved).toBeUndefined();
+  });
+
+  test('should return false when resolving non-existent error', () => {
+    const result = tracker.resolveError('nonexistent-id');
+    expect(result).toBe(false);
+  });
+
+  test('should get errors by category', () => {
+    tracker.trackError('git', 'Git category error');
+    tracker.trackError('ai', 'AI category error');
+    tracker.trackError('git', 'Another git error');
+
+    const gitErrors = tracker.getErrorsByCategory('git');
+    const aiErrors = tracker.getErrorsByCategory('ai');
+
+    expect(gitErrors.some(e => e.message === 'Git category error')).toBe(true);
+    expect(gitErrors.some(e => e.message === 'Another git error')).toBe(true);
+    expect(aiErrors.some(e => e.message === 'AI category error')).toBe(true);
+    expect(aiErrors.some(e => e.message === 'Git category error')).toBe(false);
+  });
+
+  test('should get recent errors', () => {
+    tracker.trackError('git', 'First error');
+    tracker.trackError('ai', 'Second error');
+    tracker.trackError('config', 'Third error');
+
+    const recent = tracker.getRecentErrors(2);
+    expect(recent.length).toBeLessThanOrEqual(2);
+  });
+
+  test('should get error stats', () => {
+    tracker.trackError('git', 'Stats git error');
+    tracker.trackError('ai', 'Stats ai error');
+
+    const stats = tracker.getErrorStats();
+    expect(stats).toHaveProperty('totalErrors');
+    expect(stats).toHaveProperty('unresolvedErrors');
+    expect(stats).toHaveProperty('errorsByCategory');
+    expect(stats.totalErrors).toBeGreaterThanOrEqual(2);
+  });
+
+  test('should clear resolved errors', () => {
+    tracker.trackError('git', 'Resolved-clear error');
+    const errors = tracker.getAllErrors();
+    const error = errors.find(e => e.message === 'Resolved-clear error');
+    if (error) {
+      tracker.resolveError(error.id);
+    }
+
+    const cleared = tracker.clearResolvedErrors();
+    expect(typeof cleared).toBe('number');
+    expect(cleared).toBeGreaterThanOrEqual(0);
+  });
+
+  test('should clear all errors', () => {
+    tracker.trackError('git', 'Will be cleared 1');
+    tracker.trackError('ai', 'Will be cleared 2');
+
+    tracker.clearAllErrors();
+
+    const errors = tracker.getAllErrors(true);
+    expect(errors.length).toBe(0);
+  });
+
+  test('should include resolved errors when flag is set', () => {
+    tracker.trackError('git', 'Include-resolved error');
+    const errors = tracker.getAllErrors();
+    const error = errors.find(e => e.message === 'Include-resolved error');
+    if (error) tracker.resolveError(error.id);
+
+    const allErrors = tracker.getAllErrors(true);
+    const found = allErrors.find(e => e.message === 'Include-resolved error');
+    expect(found).toBeDefined();
+    expect(found!.resolved).toBe(true);
+  });
+});

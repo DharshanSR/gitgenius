@@ -14,11 +14,10 @@ module.exports = {
     ]
   },
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1'
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^clipboardy$': '<rootDir>/__mocks__/clipboardy.js'
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(inquirer|@inquirer/prompts|chalk|ora|clipboardy|zod|simple-git|conf|is-wsl|is-inside-container|is-docker|is-wayland|execa|is-plain-obj|figures|is-unicode-supported|yoctocolors|npm-run-path|path-key)/)'
-  ],
+  transformIgnorePatterns: [],
   extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -26,5 +25,13 @@ module.exports = {
     '!src/**/*.test.ts'
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html']
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageThresholds: {
+    global: {
+      statements: 75,
+      branches: 60,
+      functions: 80,
+      lines: 75
+    }
+  }
 };
