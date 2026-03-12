@@ -41,6 +41,63 @@ describe('BranchManager', () => {
     });
   });
 
+  describe('deleteBranches (private)', () => {
+    test('should warn when no branches available for deletion', async () => {
+      const stateManager = (branchManager as any).stateManager;
+      jest.spyOn(stateManager, 'isDetachedHead').mockResolvedValue(false);
+      jest.spyOn(branchManager as any, 'getBranches').mockResolvedValue([
+        { name: 'main', current: true }
+      ]);
+      jest.spyOn(branchManager as any, 'getCurrentBranch').mockResolvedValue('main');
+
+      await (branchManager as any).deleteBranches();
+
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('No branches available for deletion');
+    });
+
+    test('should throw when in detached HEAD state', async () => {
+      const stateManager = (branchManager as any).stateManager;
+      jest.spyOn(stateManager, 'isDetachedHead').mockResolvedValue(true);
+
+      await expect((branchManager as any).deleteBranches()).rejects.toThrow('Failed to delete branches');
+    });
+
+    test('should delete selected branches when confirmed', async () => {
+      const stateManager = (branchManager as any).stateManager;
+      const git = (branchManager as any).git;
+      jest.spyOn(stateManager, 'isDetachedHead').mockResolvedValue(false);
+      jest.spyOn(branchManager as any, 'getBranches').mockResolvedValue([
+        { name: 'feature/old', current: false },
+        { name: 'main', current: true }
+      ]);
+      jest.spyOn(branchManager as any, 'getCurrentBranch').mockResolvedValue('main');
+      jest.spyOn(inquirer, 'prompt')
+        .mockResolvedValueOnce({ selectedBranches: ['feature/old'] } as any)
+        .mockResolvedValueOnce({ confirmed: true } as any);
+      const branchSpy = jest.spyOn(git, 'branch').mockResolvedValue(undefined);
+
+      await (branchManager as any).deleteBranches();
+
+      expect(branchSpy).toHaveBeenCalledWith(['-d', 'feature/old']);
+    });
+
+    test('should warn when no branches selected', async () => {
+      const stateManager = (branchManager as any).stateManager;
+      jest.spyOn(stateManager, 'isDetachedHead').mockResolvedValue(false);
+      jest.spyOn(branchManager as any, 'getBranches').mockResolvedValue([
+        { name: 'feature/old', current: false }
+      ]);
+      jest.spyOn(branchManager as any, 'getCurrentBranch').mockResolvedValue('main');
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ selectedBranches: [] } as any);
+
+      await (branchManager as any).deleteBranches();
+
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('No branches selected');
+    });
+  });
+
   describe('listBranches', () => {
     test('should show warning when no branches found', async () => {
       jest.spyOn(branchManager as any, 'getBranches').mockResolvedValue([]);

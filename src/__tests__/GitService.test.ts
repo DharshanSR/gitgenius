@@ -478,6 +478,104 @@ describe('GitService', () => {
     });
   });
 
+  describe('commit', () => {
+    test('should commit with message', async () => {
+      const git = (gitService as any).git;
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'validateEnvironment').mockResolvedValue({ valid: true, errors: [] });
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({ hasConflicts: false } as any);
+      const commitSpy = jest.spyOn(git, 'commit').mockResolvedValue(undefined);
+
+      await gitService.commit('feat: add new feature');
+      expect(commitSpy).toHaveBeenCalledWith('feat: add new feature', undefined, undefined);
+    });
+
+    test('should warn about environment issues but still commit', async () => {
+      const git = (gitService as any).git;
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'validateEnvironment').mockResolvedValue({
+        valid: false,
+        errors: ['Git user not configured']
+      });
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({ hasConflicts: false } as any);
+      jest.spyOn(git, 'commit').mockResolvedValue(undefined);
+
+      await gitService.commit('chore: test message');
+
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('Environment warnings');
+    });
+
+    test('should throw when conflicts exist', async () => {
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'validateEnvironment').mockResolvedValue({ valid: true, errors: [] });
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({ hasConflicts: true } as any);
+      jest.spyOn(stateManager, 'getConflictResolutionHints').mockResolvedValue(['Fix conflicts first']);
+
+      await expect(gitService.commit('fix: test')).rejects.toThrow('Cannot commit: merge conflicts');
+    });
+
+    test('should wrap nothing-to-commit error', async () => {
+      const git = (gitService as any).git;
+      const stateManager = (gitService as any).stateManager;
+      jest.spyOn(stateManager, 'validateEnvironment').mockResolvedValue({ valid: true, errors: [] });
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({ hasConflicts: false } as any);
+      jest.spyOn(git, 'commit').mockRejectedValue(new Error('nothing to commit, working tree clean'));
+
+      await expect(gitService.commit('test message')).rejects.toThrow('Nothing to commit');
+    });
+  });
+
+  describe('getLastCommitDiff', () => {
+    test('should return diff between last two commits', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'diff').mockResolvedValue('+ change');
+
+      const diff = await gitService.getLastCommitDiff();
+      expect(diff).toBe('+ change');
+    });
+  });
+
+  describe('getFileDiff', () => {
+    test('should return diff for specific file', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'diff').mockResolvedValue('+ file change');
+
+      const diff = await gitService.getFileDiff('src/test.ts');
+      expect(diff).toBe('+ file change');
+    });
+  });
+
+  describe('getBranchLocal', () => {
+    test('should return branch info', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'branchLocal').mockResolvedValue({ current: 'main', all: ['main'] } as any);
+
+      const branch = await gitService.getBranchLocal();
+      expect(branch.current).toBe('main');
+    });
+  });
+
+  describe('getConfig', () => {
+    test('should return git config value', async () => {
+      const git = (gitService as any).git;
+      jest.spyOn(git, 'getConfig').mockResolvedValue({ value: 'Test User' } as any);
+
+      const config = await gitService.getConfig('user.name');
+      expect(config.value).toBe('Test User');
+    });
+  });
+
+  describe('ensureCleanWorkspace', () => {
+    test('should delegate to stateManager', async () => {
+      const stateManager = (gitService as any).stateManager;
+      const cleanSpy = jest.spyOn(stateManager, 'ensureCleanWorkspace').mockResolvedValue(undefined);
+
+      await gitService.ensureCleanWorkspace();
+      expect(cleanSpy).toHaveBeenCalledWith(false);
+    });
+  });
+
   describe('getWorktrees', () => {
     test('should return worktrees from stateManager', async () => {
       const stateManager = (gitService as any).stateManager;

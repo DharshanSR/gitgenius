@@ -25,5 +25,13 @@ module.exports = {
     '!src/**/*.test.ts'
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html']
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageThresholds: {
+    global: {
+      statements: 75,
+      branches: 60,
+      functions: 80,
+      lines: 75
+    }
+  }
 };

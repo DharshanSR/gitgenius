@@ -238,5 +238,76 @@ describe('SystemOperations', () => {
 
       expect(stateManager.validateEnvironment).toHaveBeenCalled();
     });
+
+    test('should show worktrees details when worktrees option is set', async () => {
+      const gitService = (sysOps as any).gitService;
+      jest.spyOn(gitService, 'ensureGitRepo').mockResolvedValue(undefined);
+      const stateManager = gitService.getStateManager();
+      jest.spyOn(stateManager, 'displayState').mockResolvedValue(undefined);
+      jest.spyOn(stateManager, 'getWorktrees').mockResolvedValue([
+        { path: '/test/worktree', branch: 'feature/test', commit: 'abc123def', isMain: false }
+      ]);
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({
+        hasConflicts: false, isDirty: false, hasUncommittedChanges: false,
+        hasUntrackedFiles: false, hasStagedChanges: false, isDetachedHead: false,
+        hasMergeInProgress: false, hasRebaseInProgress: false, currentBranch: 'main', currentCommit: 'abc'
+      });
+
+      const options: GitStateOptions = { worktrees: true };
+      await sysOps.showGitState(options);
+
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('Worktrees');
+    });
+
+    test('should show submodules when submodules option is set', async () => {
+      const gitService = (sysOps as any).gitService;
+      jest.spyOn(gitService, 'ensureGitRepo').mockResolvedValue(undefined);
+      const stateManager = gitService.getStateManager();
+      jest.spyOn(stateManager, 'displayState').mockResolvedValue(undefined);
+      jest.spyOn(stateManager, 'getSubmodules').mockResolvedValue([
+        { path: 'lib/dep', url: 'https://github.com/test/dep.git', branch: 'main', commit: 'abc123def', isInitialized: true }
+      ]);
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({
+        hasConflicts: false, isDirty: false, hasUncommittedChanges: false,
+        hasUntrackedFiles: false, hasStagedChanges: false, isDetachedHead: false,
+        hasMergeInProgress: false, hasRebaseInProgress: false, currentBranch: 'main', currentCommit: 'abc'
+      });
+
+      const options: GitStateOptions = { submodules: true };
+      await sysOps.showGitState(options);
+
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('Submodules');
+    });
+
+    test('should show conflict hints when conflicts exist', async () => {
+      const gitService = (sysOps as any).gitService;
+      jest.spyOn(gitService, 'ensureGitRepo').mockResolvedValue(undefined);
+      const stateManager = gitService.getStateManager();
+      jest.spyOn(stateManager, 'displayState').mockResolvedValue(undefined);
+      jest.spyOn(stateManager, 'getState').mockResolvedValue({
+        hasConflicts: true, isDirty: true, hasUncommittedChanges: true,
+        hasUntrackedFiles: false, hasStagedChanges: false, isDetachedHead: false,
+        hasMergeInProgress: true, hasRebaseInProgress: false, currentBranch: 'main', currentCommit: 'abc'
+      });
+      jest.spyOn(stateManager, 'getConflictResolutionHints').mockResolvedValue([
+        'Resolve conflict in file.ts',
+        'Run git add file.ts'
+      ]);
+
+      const options: GitStateOptions = {};
+      await sysOps.showGitState(options);
+
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('Conflict Resolution');
+    });
+
+    test('should throw on git error', async () => {
+      const gitService = (sysOps as any).gitService;
+      jest.spyOn(gitService, 'ensureGitRepo').mockRejectedValue(new Error('Not in git repo'));
+
+      await expect(sysOps.showGitState({})).rejects.toThrow('Failed to show Git state');
+    });
   });
 });

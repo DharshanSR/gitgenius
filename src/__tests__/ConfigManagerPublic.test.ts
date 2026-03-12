@@ -3,6 +3,7 @@
  */
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { ConfigManager } from '../core/ConfigManager';
+import inquirer from 'inquirer';
 
 describe('ConfigManager (public API)', () => {
   let configManager: ConfigManager;
@@ -234,6 +235,201 @@ describe('ConfigManager (public API)', () => {
 
       await configManager.handleConfig('provider', 'gemini');
       expect(setConfigSpy).toHaveBeenCalledWith('provider', 'gemini');
+    });
+  });
+
+  describe('private methods via direct access', () => {
+    test('listConfig should display config values', () => {
+      (configManager as any).listConfig();
+      expect(consoleSpy).toHaveBeenCalled();
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('Configuration');
+    });
+
+    test('backupConfig should write backup file', async () => {
+      const fs = require('fs');
+      const writeSync = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      
+      await (configManager as any).backupConfig();
+      
+      expect(writeSync).toHaveBeenCalled();
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('backed up');
+    });
+
+    test('exportConfig should export to specified path', async () => {
+      const fs = require('fs');
+      const writeSync = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+
+      await (configManager as any).exportConfig('/tmp/config.json');
+
+      expect(writeSync).toHaveBeenCalledWith('/tmp/config.json', expect.any(String));
+    });
+
+    test('resetConfig should prompt and reset when confirmed', async () => {
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
+      const clearSpy = jest.spyOn((configManager as any).config, 'clear').mockReturnValue(undefined);
+
+      await (configManager as any).resetConfig();
+
+      expect(clearSpy).toHaveBeenCalled();
+    });
+
+    test('resetConfig should not reset when not confirmed', async () => {
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: false } as any);
+      const clearSpy = jest.spyOn((configManager as any).config, 'clear').mockReturnValue(undefined);
+
+      await (configManager as any).resetConfig();
+
+      expect(clearSpy).not.toHaveBeenCalled();
+    });
+
+    test('migrateConfigManual should migrate and update config', async () => {
+      await (configManager as any).migrateConfigManual();
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('migrated');
+    });
+
+    test('validateCurrentConfig should show valid message for valid config', async () => {
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ fix: false } as any);
+      
+      await (configManager as any).validateCurrentConfig();
+      
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      // Either valid message or migration offer
+      expect(output.length).toBeGreaterThan(0);
+    });
+
+    test('importConfig should show error when file not found', async () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      await (configManager as any).importConfig('/nonexistent/path.json');
+      
+      expect(errorSpy).toHaveBeenCalled();
+    });
+
+    test('importConfig should import when confirmed', async () => {
+      const existsSyncSpy = jest.spyOn(require('fs'), 'existsSync').mockReturnValue(true);
+      const readFileSpy = jest.spyOn(require('fs'), 'readFileSync').mockReturnValue(
+        JSON.stringify({ provider: 'gemini', model: 'gemini-pro', maxTokens: 200, temperature: 0.5 })
+      );
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
+
+      await (configManager as any).importConfig('/path/to/config.json');
+
+      existsSyncSpy.mockRestore();
+      readFileSpy.mockRestore();
+    });
+
+    test('applyTemplate should show error when template not found', async () => {
+      await (configManager as any).applyTemplate('nonexistent-template');
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('not found');
+    });
+
+    test('applyTemplate should apply valid template when confirmed', async () => {
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
+      // Mock a valid template
+      const configTemplates = await import('../core/ConfigTemplates');
+      jest.spyOn(configTemplates, 'getTemplate').mockReturnValue({
+        name: 'test-template',
+        description: 'Test template',
+        config: { provider: 'openai', maxTokens: 200 }
+      } as any);
+
+      await (configManager as any).applyTemplate('test-template');
+    });
+
+    test('setConfigInteractive for provider should call setProvider', async () => {
+      const setProviderSpy = jest.spyOn(configManager as any, 'setProvider').mockResolvedValue(undefined);
+      
+      await (configManager as any).setConfigInteractive('provider');
+      
+      expect(setProviderSpy).toHaveBeenCalled();
+    });
+
+    test('setConfigInteractive for model should call setModel', async () => {
+      const setModelSpy = jest.spyOn(configManager as any, 'setModel').mockResolvedValue(undefined);
+      
+      await (configManager as any).setConfigInteractive('model');
+      
+      expect(setModelSpy).toHaveBeenCalled();
+    });
+
+    test('setConfigInteractive for apiKey should call setApiKey', async () => {
+      const setApiKeySpy = jest.spyOn(configManager as any, 'setApiKey').mockResolvedValue(undefined);
+      
+      await (configManager as any).setConfigInteractive('apiKey');
+      
+      expect(setApiKeySpy).toHaveBeenCalled();
+    });
+
+    test('setConfigInteractive for other key should prompt for value', async () => {
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ value: 'test-value' } as any);
+      
+      await (configManager as any).setConfigInteractive('customKey');
+      
+      expect(configManager.getConfig('customKey')).toBe('test-value');
+    });
+
+    test('setProvider should update provider config', async () => {
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ provider: 'gemini' } as any);
+
+      await (configManager as any).setProvider();
+
+      expect(configManager.getConfig('provider')).toBe('gemini');
+    });
+
+    test('setModel should update model config for openai provider', async () => {
+      configManager.setConfigValue('provider', 'openai');
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ model: 'gpt-4' } as any);
+
+      await (configManager as any).setModel();
+
+      expect(configManager.getConfig('model')).toBe('gpt-4');
+    });
+
+    test('setModel should update model config for gemini provider', async () => {
+      configManager.setConfigValue('provider', 'gemini');
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ model: 'gemini-pro' } as any);
+
+      await (configManager as any).setModel();
+
+      expect(configManager.getConfig('model')).toBe('gemini-pro');
+    });
+
+    test('setModel should update model config for anthropic provider', async () => {
+      configManager.setConfigValue('provider', 'anthropic');
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ model: 'claude-3-haiku-20240307' } as any);
+
+      await (configManager as any).setModel();
+
+      expect(configManager.getConfig('model')).toBe('claude-3-haiku-20240307');
+    });
+
+    test('restoreConfig should show error when backup file not found', async () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      await (configManager as any).restoreConfig('/nonexistent/backup.json');
+
+      expect(errorSpy).toHaveBeenCalled();
+    });
+
+    test('restoreConfig should restore config when confirmed', async () => {
+      const fs = require('fs');
+      jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+      const backup = {
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        config: { provider: 'gemini', model: 'gemini-pro', maxTokens: 300, temperature: 0.8 }
+      };
+      jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(backup));
+      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
+
+      await (configManager as any).restoreConfig('/path/to/backup.json');
+
+      const output = consoleSpy.mock.calls.map(c => c[0] as string).join(' ');
+      expect(output).toContain('restored');
     });
   });
 });
