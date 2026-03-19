@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { logger, LogLevel } from '../utils/Logger.js';
 import { errorTracker } from '../utils/ErrorTracker.js';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
+import { memoryMonitor } from '../utils/MemoryMonitor.js';
 
 export interface LogCommandOptions {
   level?: string;
@@ -29,6 +30,7 @@ export interface DebugCommandOptions {
   disable?: boolean;
   status?: boolean;
   performance?: boolean;
+  memory?: boolean;
 }
 
 export class LoggingHandler {
@@ -253,6 +255,38 @@ export class LoggingHandler {
         console.log(chalk.cyan(`  Total runs: ${opMetrics.length}`));
       });
 
+      return;
+    }
+
+    // Show memory usage report
+    if (options.memory) {
+      const stats = memoryMonitor.getStats();
+      const current = stats.current;
+      const peak = stats.peak;
+
+      console.log(chalk.blue('[DEBUG] Memory Usage Report:'));
+      console.log(chalk.gray('─'.repeat(80)));
+      console.log(chalk.white('\n  Current usage:'));
+      console.log(chalk.cyan(`    Heap used:  ${memoryMonitor.formatBytes(current.heapUsed)}`));
+      console.log(chalk.cyan(`    Heap total: ${memoryMonitor.formatBytes(current.heapTotal)}`));
+      console.log(chalk.cyan(`    RSS:        ${memoryMonitor.formatBytes(current.rss)}`));
+      console.log(chalk.cyan(`    External:   ${memoryMonitor.formatBytes(current.external)}`));
+
+      console.log(chalk.white('\n  Peak usage (heap):'));
+      console.log(chalk.cyan(`    Heap used:  ${memoryMonitor.formatBytes(peak.heapUsed)}`));
+      console.log(chalk.cyan(`    Heap total: ${memoryMonitor.formatBytes(peak.heapTotal)}`));
+      console.log(chalk.cyan(`    RSS:        ${memoryMonitor.formatBytes(peak.rss)}`));
+
+      const snapshotCount = stats.snapshots.length;
+      console.log(chalk.white(`\n  Snapshots recorded: ${snapshotCount}`));
+
+      if (memoryMonitor.checkThreshold()) {
+        console.log(chalk.yellow('\n  ⚠ Memory usage is above the warning threshold.'));
+        console.log(chalk.yellow('    Consider running `gitgenius debug --memory` after large operations'));
+        console.log(chalk.yellow('    to track and release retained resources.'));
+      } else {
+        console.log(chalk.green('\n  ✓ Memory usage is within normal limits'));
+      }
       return;
     }
 

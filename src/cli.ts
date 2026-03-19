@@ -411,6 +411,7 @@ program
   .option('--disable', 'Disable debug mode')
   .option('--status', 'Show debug status (default)')
   .option('--performance', 'Show performance metrics')
+  .option('--memory', 'Show memory usage report')
   .action(async (options) => {
     try {
       await loggingHandler.handleDebug(options);

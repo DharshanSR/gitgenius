@@ -146,6 +146,7 @@ export interface DebugCommandOptions {
   disable?: boolean;
   status?: boolean;
   performance?: boolean;
+  memory?: boolean;
 }
 
 export interface AIProvider {
