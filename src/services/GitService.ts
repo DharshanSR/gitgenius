@@ -1,8 +1,14 @@
 import simpleGit, { SimpleGit } from 'simple-git';
 import chalk from 'chalk';
+import { spawn } from 'child_process';
 import { GitStats } from '../types.js';
 import { GitStateManager } from '../utils/GitStateManager.js';
 import { ErrorHandler } from '../utils/ErrorHandler.js';
+import { memoryMonitor } from '../utils/MemoryMonitor.js';
+import { logger } from '../utils/Logger.js';
+
+/** Maximum diff size (in bytes) before a warning is emitted and the diff is truncated. */
+const MAX_DIFF_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB
 
 export class GitService {
   private git: SimpleGit;
@@ -69,8 +75,12 @@ export class GitService {
         const hints = await this.stateManager.getConflictResolutionHints();
         hints.forEach(hint => console.log(chalk.yellow(hint)));
       }
-      
-      return await this.git.diff(['--staged']);
+
+      memoryMonitor.captureSnapshot();
+      const diff = await this.git.diff(['--staged']);
+      memoryMonitor.captureSnapshot();
+
+      return this.applyDiffSizeLimit(diff, 'staged diff');
     } catch (error) {
       throw ErrorHandler.gitError(
         `Failed to get staged diff: ${error instanceof Error ? error.message : String(error)}`,
@@ -80,11 +90,114 @@ export class GitService {
   }
 
   async getLastCommitDiff(): Promise<string> {
-    return await this.git.diff(['HEAD~1', 'HEAD']);
+    const diff = await this.git.diff(['HEAD~1', 'HEAD']);
+    return this.applyDiffSizeLimit(diff, 'last commit diff');
   }
 
   async getFileDiff(file: string): Promise<string> {
-    return await this.git.diff([file]);
+    const diff = await this.git.diff([file]);
+    return this.applyDiffSizeLimit(diff, `file diff (${file})`);
+  }
+
+  /**
+   * Return a size-limited version of `getDiff`.
+   * If the diff exceeds `maxBytes`, it is truncated and a warning is logged.
+   */
+  async getDiffLimited(options: string[] = [], maxBytes: number = MAX_DIFF_SIZE_BYTES): Promise<string> {
+    const diff = await this.git.diff(options);
+    return this.applyDiffSizeLimit(diff, 'diff', maxBytes);
+  }
+
+  /**
+   * Stream a git diff via `child_process.spawn` and collect at most `maxBytes`
+   * of output, then resolve with the (possibly truncated) diff string.
+   *
+   * This avoids buffering the entire diff in memory before processing.
+   */
+  getDiffStream(options: string[] = [], maxBytes: number = MAX_DIFF_SIZE_BYTES): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let chunks: Buffer[] = [];
+      let totalSize = 0;
+      let truncated = false;
+      const stderrLines: string[] = [];
+
+      const child = spawn('git', ['diff', ...options], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      child.stdout.on('data', (chunk: Buffer) => {
+        if (truncated) return;
+
+        const remaining = maxBytes - totalSize;
+        if (chunk.length > remaining) {
+          chunks.push(chunk.subarray(0, remaining));
+          totalSize += remaining;
+          truncated = true;
+          child.kill('SIGTERM');
+        } else {
+          chunks.push(chunk);
+          totalSize += chunk.length;
+        }
+      });
+
+      child.stderr.on('data', (chunk: Buffer) => {
+        stderrLines.push(chunk.toString('utf8'));
+      });
+
+      child.on('error', reject);
+
+      child.on('close', (code) => {
+        // If the process exited with a non-zero code and we have stderr output,
+        // treat it as an error (unless we killed the process intentionally).
+        if (code !== 0 && !truncated && stderrLines.length > 0) {
+          return reject(new Error(`git diff failed: ${stderrLines.join('').trim()}`));
+        }
+
+        const diff = Buffer.concat(chunks).toString('utf8');
+        if (truncated) {
+          logger.warn(
+            'GitService',
+            `Diff output truncated at ${(maxBytes / (1024 * 1024)).toFixed(2)} MB to protect memory`
+          );
+          console.log(
+            chalk.yellow(
+              `⚠ Diff truncated at ${(maxBytes / (1024 * 1024)).toFixed(2)} MB. ` +
+                'Only the first portion of the diff is shown.'
+            )
+          );
+        }
+        // Release buffer references so they can be garbage-collected
+        chunks = [];
+        memoryMonitor.captureSnapshot();
+        resolve(diff);
+      });
+    });
+  }
+
+  /**
+   * Enforce a size limit on a diff string.
+   * If the diff exceeds `maxBytes`, it is truncated and a warning is printed.
+   */
+  private applyDiffSizeLimit(
+    diff: string,
+    label: string,
+    maxBytes: number = MAX_DIFF_SIZE_BYTES
+  ): string {
+    const byteLength = Buffer.byteLength(diff, 'utf8');
+    if (byteLength > maxBytes) {
+      logger.warn(
+        'GitService',
+        `Large ${label} detected (${(byteLength / (1024 * 1024)).toFixed(2)} MB). ` +
+          `Truncating to ${(maxBytes / (1024 * 1024)).toFixed(2)} MB.`
+      );
+      console.log(
+        chalk.yellow(
+          `⚠ ${label} is large (${(byteLength / (1024 * 1024)).toFixed(2)} MB). ` +
+            `Processing first ${(maxBytes / (1024 * 1024)).toFixed(2)} MB only.`
+        )
+      );
+      // Truncate at a safe byte boundary
+      return Buffer.from(diff, 'utf8').subarray(0, maxBytes).toString('utf8');
+    }
+    return diff;
   }
 
   async commit(message: string, options?: any): Promise<void> {
