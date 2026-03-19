@@ -5,6 +5,7 @@ export interface CommitOptions {
   type?: string;
   provider?: string;
   detailed?: boolean;
+  dryRun?: boolean;
 }
 
 export interface PullRequestOptions {
@@ -26,6 +27,13 @@ export interface PreviousCommitOptions {
 export interface ConfigOptions {
   reset?: boolean;
   list?: boolean;
+  backup?: boolean;
+  restore?: string;
+  validate?: boolean;
+  template?: string;
+  export?: string;
+  import?: string;
+  migrate?: boolean;
 }
 
 export interface BranchOptions {
@@ -109,6 +117,37 @@ export interface UpdateOptions {
   force?: boolean;
 }
 
+export interface GitStateOptions {
+  validate?: boolean;
+  worktrees?: boolean;
+  submodules?: boolean;
+}
+
+export interface LogCommandOptions {
+  level?: string;
+  lines?: string;
+  clear?: boolean;
+  stats?: boolean;
+  tail?: boolean;
+  export?: string;
+}
+
+export interface ErrorCommandOptions {
+  list?: boolean;
+  stats?: boolean;
+  clear?: boolean;
+  resolved?: boolean;
+  category?: string;
+  export?: string;
+}
+
+export interface DebugCommandOptions {
+  enable?: boolean;
+  disable?: boolean;
+  status?: boolean;
+  performance?: boolean;
+}
+
 export interface AIProvider {
   name: string;
   generateCommitMessage(diff: string, type?: string, detailed?: boolean): Promise<string>;
@@ -128,3 +167,27 @@ export interface GitStats {
   linesAdded: number;
   linesDeleted: number;
 }
+
+export interface ConfigSchema {
+  provider: string;
+  model: string;
+  apiKey: string | null;
+  maxTokens: number;
+  temperature: number;
+  commitTypes: string[];
+  [key: string]: any;
+}
+
+export interface ConfigBackup {
+  version: string;
+  timestamp: string;
+  config: ConfigSchema;
+}
+
+export interface ConfigTemplate {
+  name: string;
+  description: string;
+  config: Partial<ConfigSchema>;
+}
+
+export type ConfigLevel = 'global' | 'user' | 'project';

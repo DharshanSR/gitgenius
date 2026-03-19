@@ -1,6 +1,6 @@
 # 🚀 GitGenius Commands Reference
 
-Complete overview of all available commands in GitGenius v1.0.0
+Complete overview of all available commands in GitGenius v1.4.0
 
 ---
 
@@ -32,6 +32,15 @@ Complete overview of all available commands in GitGenius v1.0.0
 - [`template`](#template) - Manage commit message templates
 - [`alias`](#alias) - Custom command aliases
 
+### **🔀 Pull Requests**
+- [`pr`](#pr) - Create AI-powered pull requests
+
+### **📝 Logging & Debugging**
+- [`logs`](#logs) - View and manage GitGenius logs
+- [`errors`](#errors) - Track and manage errors
+- [`debug`](#debug) - Debug mode and performance monitoring
+- [`state`](#state) - Show detailed Git repository state
+
 ### **🛠️ System**
 - [`feedback`](#feedback) - Send feedback and bug reports
 - [`update`](#update) - Check for updates
@@ -60,12 +69,16 @@ gitgenius -t docs -e -p gemini
 - `-e, --edit` - Enable interactive editing
 - `-t, --type <type>` - Specify commit type (feat, fix, docs, etc.)
 - `-p, --provider <provider>` - AI provider (openai, gemini, anthropic)
+- `-d, --detailed` - Generate detailed commit message with body
+- `--dry-run` - Generate commit message without applying changes
 
 **Examples:**
 ```bash
 gitgenius -t feat -a                    # Generate feat commit and apply
 gitgenius --provider gemini --copy      # Use Gemini and copy to clipboard
 gitgenius -t fix -e -a                  # Generate fix, edit interactively, then apply
+gitgenius --dry-run                     # Preview commit message without applying
+gitgenius -t feat --dry-run             # Preview feat-type commit message
 ```
 
 ### `prev`
@@ -116,13 +129,14 @@ gitgenius suggest --scope              # Just suggest scope
 ## 🔧 **Configuration & Setup**
 
 ### `config`
-Manage GitGenius configuration settings.
+Manage GitGenius configuration settings with validation, migration, and templates.
 
 ```bash
 gitgenius config
 gitgenius config provider
 gitgenius config apiKey your_key_here
 gitgenius config --reset
+gitgenius config --template gemini
 ```
 
 **Arguments:**
@@ -132,6 +146,21 @@ gitgenius config --reset
 **Options:**
 - `--reset` - Reset all configuration
 - `--list` - List all configuration
+- `--backup` - Backup current configuration
+- `--restore <file>` - Restore configuration from backup
+- `--validate` - Validate current configuration
+- `--template <name>` - Apply a configuration template
+- `--export <file>` - Export configuration to file
+- `--import <file>` - Import configuration from file
+- `--migrate` - Manually migrate configuration to latest version
+
+**Available Templates:**
+- `default` - Default OpenAI GPT-3.5 configuration
+- `openai-gpt4` - GPT-4 for detailed commit messages
+- `gemini` - Google Gemini Pro configuration
+- `concise` - Lower token limit for concise messages
+- `detailed` - Higher token limit for detailed messages
+- `conventional` - Strict conventional commits format
 
 **Examples:**
 ```bash
@@ -140,7 +169,20 @@ gitgenius config provider openai        # Set provider to OpenAI
 gitgenius config model gpt-4           # Set model to GPT-4
 gitgenius config --list                # Show all settings
 gitgenius config --reset               # Reset to defaults
+gitgenius config --validate            # Validate configuration
+gitgenius config --backup              # Backup configuration
+gitgenius config --template gemini     # Apply Gemini template
+gitgenius config --export config.json  # Export to file
+gitgenius config --import config.json  # Import from file
 ```
+
+**Configuration Inheritance:**
+GitGenius uses a three-level configuration system:
+1. **Global** - System-wide settings (lowest priority)
+2. **User** - User-specific settings (medium priority)
+3. **Project** - Project-specific settings in `.gitgenius/` (highest priority)
+
+Project settings override user settings, which override global settings.
 
 ### `init`
 Initialize repository with GitGenius best practices.
@@ -399,6 +441,137 @@ gitgenius alias --remove "old-alias"    # Remove alias
 
 ---
 
+## 🔀 **Pull Request Commands**
+
+### `pr`
+Create AI-powered pull requests with intelligent descriptions.
+
+```bash
+gitgenius pr
+gitgenius pr --title "Add new feature" --target main
+gitgenius pr --draft --reviewers "john,jane"
+```
+
+**Aliases:** `pull-request`
+
+**Options:**
+- `-t, --title <title>` - PR title
+- `-b, --body <body>` - PR body/description
+- `--draft` - Create as draft PR
+- `--target <branch>` - Target branch (default: main)
+- `--source <branch>` - Source branch (default: current branch)
+- `-r, --reviewers <reviewers>` - Comma-separated list of reviewers
+
+**Examples:**
+```bash
+gitgenius pr                            # Interactive PR creation
+gitgenius pr --title "Fix login bug"   # Set PR title
+gitgenius pr --draft --target develop  # Create draft PR to develop
+gitgenius pr -r "alice,bob"            # Request reviewers
+```
+
+---
+
+## 📝 **Logging & Debugging Commands**
+
+### `logs`
+View and manage GitGenius logs for monitoring and troubleshooting.
+
+```bash
+gitgenius logs
+gitgenius logs --lines 100 --export logs.json
+```
+
+**Options:**
+- `-l, --level <level>` - Set log level (trace, debug, info, warn, error)
+- `-n, --lines <count>` - Number of log lines to show (default: 50)
+- `--clear` - Clear all logs
+- `--stats` - Show log statistics
+- `--tail` - Tail logs (watch mode)
+- `--export <file>` - Export logs to file
+
+**Examples:**
+```bash
+gitgenius logs                          # Show recent logs
+gitgenius logs --lines 100             # Show last 100 lines
+gitgenius logs --stats                 # View log statistics
+gitgenius logs --level debug           # Set log level to debug
+gitgenius logs --export debug.json     # Export logs to file
+gitgenius logs --clear                 # Clear all logs
+```
+
+### `errors`
+Track and manage errors for troubleshooting and debugging.
+
+```bash
+gitgenius errors
+gitgenius errors --stats --category git
+```
+
+**Options:**
+- `-l, --list` - List errors (default)
+- `--stats` - Show error statistics
+- `--clear` - Clear errors
+- `--resolved` - Include resolved errors
+- `--category <category>` - Filter by error category (git, ai, config, network, user)
+- `--export <file>` - Export errors to file
+
+**Examples:**
+```bash
+gitgenius errors                        # List unresolved errors
+gitgenius errors --stats               # View error statistics
+gitgenius errors --category git        # Filter by git errors
+gitgenius errors --resolved            # Show all errors including resolved
+gitgenius errors --export report.json  # Export errors
+gitgenius errors --clear               # Clear all errors
+```
+
+### `debug`
+Debug mode and performance monitoring for troubleshooting.
+
+```bash
+gitgenius debug
+gitgenius debug --enable --performance
+```
+
+**Options:**
+- `--enable` - Enable debug mode
+- `--disable` - Disable debug mode
+- `--status` - Show debug status (default)
+- `--performance` - Show performance metrics
+
+**Examples:**
+```bash
+gitgenius debug                         # Show debug status
+gitgenius debug --enable               # Enable verbose logging
+gitgenius debug --disable              # Return to normal logging
+gitgenius debug --performance          # View performance metrics
+```
+
+### `state`
+Show detailed Git repository state including worktrees and submodules.
+
+```bash
+gitgenius state
+gitgenius state --validate --worktrees
+```
+
+**Options:**
+- `--validate` - Validate Git environment
+- `--worktrees` - Show worktree information
+- `--submodules` - Show submodule information
+
+**Examples:**
+```bash
+gitgenius state                         # Show repository state
+gitgenius state --validate             # Validate Git environment
+gitgenius state --worktrees            # Show worktree details
+gitgenius state --submodules           # Show submodule status
+gitgenius state --validate --worktrees --submodules  # Show all info
+```
+
+---
+
 ## 🛠️ **System Commands**
 
 ### `feedback`
@@ -447,6 +620,15 @@ gitgenius log --ai -n 5                # AI-enhanced git log
 gitgenius suggest --type                # AI commit type suggestions
 gitgenius template --add "custom"       # Custom templates
 gitgenius history --export report.json  # Export message history
+gitgenius pr --draft --target develop   # Create draft PR
+```
+
+### **Debugging & Monitoring Commands:**
+```bash
+gitgenius logs --lines 100             # View recent logs
+gitgenius errors --stats               # Error statistics
+gitgenius debug --enable               # Enable debug mode
+gitgenius state --validate             # Validate Git environment
 ```
 
 ### **Team Commands:**
@@ -471,6 +653,6 @@ gg config                               # Same as gitgenius config
 
 ---
 
-**Total Commands: 17 main commands + numerous options and flags**
+**Total Commands: 22 main commands + numerous options and flags**
 
 Each command is designed to work together as part of a professional AI-powered git workflow! ✨

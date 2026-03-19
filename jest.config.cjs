@@ -1,16 +1,23 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'mjs'],
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      useESM: true
-    }]
+    '^.+\\.m?[tj]sx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        isolatedModules: true
+      }
+    ]
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(inquirer|chalk|ora|clipboardy)/)'
-  ],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^clipboardy$': '<rootDir>/__mocks__/clipboardy.js'
+  },
+  transformIgnorePatterns: [],
   extensionsToTreatAsEsm: ['.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -18,5 +25,13 @@ module.exports = {
     '!src/**/*.test.ts'
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html']
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageThresholds: {
+    global: {
+      statements: 75,
+      branches: 60,
+      functions: 80,
+      lines: 75
+    }
+  }
 };

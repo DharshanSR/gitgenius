@@ -1,4 +1,5 @@
 import inquirer from 'inquirer';
+import { editor } from '@inquirer/prompts';
 import chalk from 'chalk';
 import clipboardy from 'clipboardy';
 import ora from 'ora';
@@ -52,6 +53,14 @@ export class CommitHandler {
         this.storeInHistory(commitMessage, options);
         
         spinner.stop();
+        
+        if (options.dryRun) {
+          console.log(chalk.blue('🔍 [DRY RUN] Generated commit message (no changes applied):'));
+          console.log(chalk.white(`          ${commitMessage}`));
+          console.log(chalk.gray('          Use without --dry-run to apply this commit message'));
+          return;
+        }
+        
         console.log(chalk.green('✨ [SUCCESS] Generated commit message:'));
         console.log(chalk.white(`          ${commitMessage}`));
 
@@ -107,14 +116,10 @@ export class CommitHandler {
   }
 
   private async editCommitMessage(): Promise<void> {
-    const { editedMessage } = await inquirer.prompt([
-      {
-        type: 'editor',
-        name: 'editedMessage',
-        message: 'Edit the commit message:',
-        default: this.lastCommitMessage
-      }
-    ]);
+    const editedMessage = await editor({
+      message: 'Edit the commit message:',
+      default: this.lastCommitMessage || ''
+    });
 
     this.lastCommitMessage = editedMessage.trim();
   }

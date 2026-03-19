@@ -15,7 +15,7 @@
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "types": ["node"]
+    "types": ["node", "jest", "@jest/globals"]
   },
   "include": [
     "src/**/*"

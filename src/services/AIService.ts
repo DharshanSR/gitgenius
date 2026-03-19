@@ -5,9 +5,19 @@ import { AIProvider } from '../types.js';
 
 export class AIService {
   private configManager: ConfigManager;
+  private currentProvider: string;
 
   constructor() {
     this.configManager = new ConfigManager();
+    this.currentProvider = this.configManager.getConfig('provider') || 'openai';
+  }
+
+  setProvider(providerName: string): void {
+    this.currentProvider = providerName;
+  }
+
+  getCurrentProvider(): string {
+    return this.currentProvider;
   }
 
   getProvider(providerName?: string): AIProvider {

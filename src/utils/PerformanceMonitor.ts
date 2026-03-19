@@ -1,5 +1,6 @@
 import { performance } from 'perf_hooks';
 import { ConfigManager } from '../core/ConfigManager.js';
+import { logger } from './Logger.js';
 
 interface PerformanceMetric {
   operation: string;
@@ -53,6 +54,18 @@ export class PerformanceMonitor {
 
     // Store in config for persistence
     this.configManager.setConfigValue('performanceMetrics', this.metrics);
+
+    // Log performance metric
+    logger.debug('Performance', `${metric.operation} completed in ${metric.duration.toFixed(2)}ms`, {
+      operation: metric.operation,
+      duration: metric.duration,
+      success: metric.success
+    });
+
+    // Log slow operations as warnings
+    if (metric.duration > 5000 && metric.success) {
+      logger.warn('Performance', `Slow operation detected: ${metric.operation} took ${(metric.duration / 1000).toFixed(2)}s`);
+    }
   }
 
   getAverageTime(operation: string): number {
