@@ -152,6 +152,13 @@ export interface DebugCommandOptions {
 export interface AIProvider {
   name: string;
   generateCommitMessage(diff: string, type?: string, detailed?: boolean): Promise<string>;
+  /** Optional streaming variant – calls `onChunk` with each partial response token. */
+  generateCommitMessageStream?(
+    diff: string,
+    type?: string,
+    detailed?: boolean,
+    onChunk?: (chunk: string) => void
+  ): Promise<string>;
 }
 
 export interface CommitTemplate {

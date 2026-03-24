@@ -2,11 +2,13 @@ import axios from 'axios';
 import { AIProvider } from '../types.js';
 import { SecurityUtils } from '../utils/SecurityUtils.js';
 import { SecurityManager } from '../core/SecurityConfig.js';
+import { ConfigManager } from '../core/ConfigManager.js';
 
 export class GeminiProvider implements AIProvider {
   name = 'gemini';
   private apiKey: string;
   private securityManager: SecurityManager;
+  private configManager: ConfigManager;
 
   constructor(apiKey: string) {
     // Validate API key
@@ -15,6 +17,7 @@ export class GeminiProvider implements AIProvider {
     }
     this.apiKey = apiKey;
     this.securityManager = new SecurityManager();
+    this.configManager = new ConfigManager();
   }
 
   async generateCommitMessage(diff: string, type?: string, detailed?: boolean): Promise<string> {
@@ -48,6 +51,11 @@ export class GeminiProvider implements AIProvider {
     
     try {
       const secureConfig = this.securityManager.getSecureRequestConfig();
+      // Apply user-configured timeout (falls back to security config default)
+      const userTimeout = this.configManager.getConfig('timeout');
+      if (userTimeout) {
+        secureConfig.timeout = userTimeout;
+      }
       
       const response = await axios.post(
         apiUrl,
@@ -85,6 +93,134 @@ export class GeminiProvider implements AIProvider {
         if (error.response?.status === 429) {
           throw new Error('Gemini API rate limit exceeded. Please try again later.');
         }
+        if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+          const timeoutMs = this.configManager.getConfig('timeout') ?? 30000;
+          throw new Error(`Gemini API request timed out after ${timeoutMs / 1000}s. Consider increasing the timeout with: gitgenius config timeout`);
+        }
+        throw new Error(`Gemini API error: ${error.response?.data?.error?.message || error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Streaming variant: emits each token chunk via `onChunk` using Gemini's
+   * server-sent events endpoint, providing real-time feedback in the terminal.
+   */
+  async generateCommitMessageStream(
+    diff: string,
+    type?: string,
+    detailed?: boolean,
+    onChunk?: (chunk: string) => void
+  ): Promise<string> {
+    // Gemini streaming endpoint (alt=sse)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:streamGenerateContent?key=${this.apiKey}&alt=sse`;
+
+    this.securityManager.validateUrl(apiUrl);
+
+    if (!this.securityManager.checkRateLimit('gemini')) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
+    const sanitizedDiff = this.securityManager.sanitizeInput(diff);
+    const prompt = this.buildPrompt(sanitizedDiff, type, detailed);
+
+    const rotationReminder = this.securityManager.checkApiKeyRotation('gemini');
+    if (rotationReminder) {
+      console.warn(rotationReminder);
+    }
+
+    this.securityManager.auditLog('ai_request_stream', {
+      provider: 'gemini',
+      model: 'gemini-1.5-flash-latest',
+      type: type || 'default',
+      detailed: detailed || false
+    });
+
+    try {
+      const secureConfig = this.securityManager.getSecureRequestConfig();
+      const userTimeout = this.configManager.getConfig('timeout');
+      if (userTimeout) {
+        secureConfig.timeout = userTimeout;
+      }
+
+      const response = await axios.post(
+        apiUrl,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: detailed ? 300 : 150
+          }
+        },
+        { ...secureConfig, responseType: 'stream' }
+      );
+
+      return await new Promise<string>((resolve, reject) => {
+        let fullMessage = '';
+        let lineBuffer = '';
+        const stream = response.data as NodeJS.ReadableStream;
+
+        stream.on('data', (raw: Buffer) => {
+          // Accumulate data to handle JSON objects split across buffer boundaries
+          lineBuffer += raw.toString();
+          const lines = lineBuffer.split('\n');
+          // Keep the last (potentially incomplete) fragment in the buffer
+          lineBuffer = lines.pop() ?? '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            const dataLine = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed;
+            try {
+              const parsed = JSON.parse(dataLine);
+              const text: string = parsed?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+              if (text) {
+                fullMessage += text;
+                onChunk?.(text);
+              }
+            } catch {
+              // non-JSON lines are ignored
+            }
+          }
+        });
+
+        stream.on('end', () => {
+          // Flush any remaining buffered content
+          if (lineBuffer.trim()) {
+            const dataLine = lineBuffer.trim().startsWith('data: ')
+              ? lineBuffer.trim().slice(6)
+              : lineBuffer.trim();
+            if (dataLine) {
+              try {
+                const parsed = JSON.parse(dataLine);
+                const text: string = parsed?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+                if (text) {
+                  fullMessage += text;
+                  onChunk?.(text);
+                }
+              } catch { /* ignored */ }
+            }
+          }
+
+          const trimmed = fullMessage.trim();
+          if (!SecurityUtils.validateCommitMessage(trimmed)) {
+            reject(new Error('Generated commit message failed security validation'));
+            return;
+          }
+          resolve(trimmed);
+        });
+
+        stream.on('error', reject);
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 403) throw new Error('Invalid Gemini API key');
+        if (error.response?.status === 429) throw new Error('Gemini API rate limit exceeded. Please try again later.');
+        if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+          const timeoutMs = this.configManager.getConfig('timeout') ?? 30000;
+          throw new Error(`Gemini API request timed out after ${timeoutMs / 1000}s. Consider increasing the timeout with: gitgenius config timeout`);
+        }
         throw new Error(`Gemini API error: ${error.response?.data?.error?.message || error.message}`);
       }
       throw error;
@@ -120,3 +256,4 @@ Git diff:
 ${diff}`;
   }
 }
+

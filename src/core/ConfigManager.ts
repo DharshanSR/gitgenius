@@ -89,7 +89,12 @@ export class ConfigManager {
         'feat', 'fix', 'docs', 'style', 'refactor', 
         'test', 'chore', 'perf', 'ci', 'build'
       ],
-      configVersion: CONFIG_VERSION
+      configVersion: CONFIG_VERSION,
+      // Performance settings
+      timeout: 30000,       // Request timeout in milliseconds
+      enableCache: true,    // Cache AI responses for identical diffs
+      cacheTimeout: 120,    // Cache TTL in minutes (2 hours)
+      maxChunkSize: 3000,   // Max diff characters per AI request chunk
     };
   }
 
