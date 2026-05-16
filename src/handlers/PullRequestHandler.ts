@@ -210,23 +210,28 @@ Generate a clear PR title and detailed description explaining what changed and w
     }
 
     // Create PR using GitHub CLI
-    const cmd = [
-      'gh pr create',
-      `--title "${options.title}"`,
-      `--body "${options.body}"`,
-      `--base ${options.target}`,
-      `--head ${options.source}`
+    const args = [
+      'pr',
+      'create',
+      '--title',
+      options.title || '',
+      '--body',
+      options.body || '',
+      '--base',
+      options.target,
+      '--head',
+      options.source
     ];
 
     if (options.draft) {
-      cmd.push('--draft');
+      args.push('--draft');
     }
 
     if (options.reviewers && options.reviewers.length > 0) {
-      cmd.push(`--reviewer ${options.reviewers.join(',')}`);
+      args.push('--reviewer', options.reviewers.join(','));
     }
 
-    childProcess.execSync(cmd.join(' '), { stdio: 'inherit' });
+    childProcess.execFileSync('gh', args, { stdio: 'inherit' });
   }
 
   private async createGitLabPR(remoteInfo: any, options: PullRequestOptions & { source: string; target: string }): Promise<void> {
@@ -241,18 +246,23 @@ Generate a clear PR title and detailed description explaining what changed and w
     }
 
     // Create MR using GitLab CLI
-    const cmd = [
-      'glab mr create',
-      `--title "${options.title}"`,
-      `--description "${options.body}"`,
-      `--target-branch ${options.target}`,
-      `--source-branch ${options.source}`
+    const args = [
+      'mr',
+      'create',
+      '--title',
+      options.title || '',
+      '--description',
+      options.body || '',
+      '--target-branch',
+      options.target,
+      '--source-branch',
+      options.source
     ];
 
     if (options.draft) {
-      cmd.push('--draft');
+      args.push('--draft');
     }
 
-    childProcess.execSync(cmd.join(' '), { stdio: 'inherit' });
+    childProcess.execFileSync('glab', args, { stdio: 'inherit' });
   }
 }
