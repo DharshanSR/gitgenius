@@ -2,6 +2,7 @@ import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globa
 import { PullRequestHandler } from '../handlers/PullRequestHandler';
 import type { PullRequestOptions } from '../types';
 import inquirer from 'inquirer';
+import childProcess from 'child_process';
 
 describe('PullRequestHandler', () => {
   let handler: PullRequestHandler;
@@ -118,8 +119,7 @@ describe('PullRequestHandler', () => {
   describe('private methods', () => {
     describe('getRemoteInfo', () => {
       test('should parse GitHub SSH URL', async () => {
-        const { execSync } = require('child_process');
-        jest.spyOn(require('child_process'), 'execSync').mockReturnValue(
+        jest.spyOn(childProcess, 'execSync').mockReturnValue(
           'git@github.com:owner/repo.git\n' as any
         );
 
@@ -131,7 +131,7 @@ describe('PullRequestHandler', () => {
       });
 
       test('should parse GitHub HTTPS URL', async () => {
-        jest.spyOn(require('child_process'), 'execSync').mockReturnValue(
+        jest.spyOn(childProcess, 'execSync').mockReturnValue(
           'https://github.com/owner/repo.git\n' as any
         );
 
@@ -141,7 +141,7 @@ describe('PullRequestHandler', () => {
       });
 
       test('should parse GitLab URL', async () => {
-        jest.spyOn(require('child_process'), 'execSync').mockReturnValue(
+        jest.spyOn(childProcess, 'execSync').mockReturnValue(
           'git@gitlab.com:owner/repo.git\n' as any
         );
 
@@ -151,7 +151,7 @@ describe('PullRequestHandler', () => {
       });
 
       test('should return null for unknown URL format', async () => {
-        jest.spyOn(require('child_process'), 'execSync').mockReturnValue(
+        jest.spyOn(childProcess, 'execSync').mockReturnValue(
           'https://bitbucket.org/owner/repo.git\n' as any
         );
 
@@ -160,7 +160,7 @@ describe('PullRequestHandler', () => {
       });
 
       test('should return null when execSync throws', async () => {
-        jest.spyOn(require('child_process'), 'execSync').mockImplementation(() => {
+        jest.spyOn(childProcess, 'execSync').mockImplementation(() => {
           throw new Error('git command failed');
         });
 
@@ -171,7 +171,7 @@ describe('PullRequestHandler', () => {
 
     describe('generatePRContent', () => {
       test('should return fallback content when git commands fail', async () => {
-        jest.spyOn(require('child_process'), 'execSync').mockImplementation(() => {
+        jest.spyOn(childProcess, 'execSync').mockImplementation(() => {
           throw new Error('git error');
         });
 
@@ -233,7 +233,7 @@ describe('PullRequestHandler', () => {
 
     describe('createGitHubPR', () => {
       test('should show alternative URL when gh CLI not found', async () => {
-        jest.spyOn(require('child_process'), 'execSync').mockImplementation(() => {
+        jest.spyOn(childProcess, 'execSync').mockImplementation(() => {
           throw new Error('gh not found');
         });
         const remoteInfo = { platform: 'github', owner: 'testowner', repo: 'testrepo', url: 'test' };
@@ -247,7 +247,7 @@ describe('PullRequestHandler', () => {
 
     describe('createGitLabPR', () => {
       test('should show alternative URL when glab CLI not found', async () => {
-        jest.spyOn(require('child_process'), 'execSync').mockImplementation(() => {
+        jest.spyOn(childProcess, 'execSync').mockImplementation(() => {
           throw new Error('glab not found');
         });
         const remoteInfo = { platform: 'gitlab', owner: 'testowner', repo: 'testrepo', url: 'test' };
