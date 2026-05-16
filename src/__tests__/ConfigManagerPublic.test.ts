@@ -327,8 +327,13 @@ describe('ConfigManager (public API)', () => {
     });
 
     test('applyTemplate should apply valid template when confirmed', async () => {
-      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
+      const promptSpy = jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
       await (configManager as any).applyTemplate('openai-gpt4');
+      expect(promptSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'confirmed', message: 'Apply this template?' })
+        ])
+      );
       expect(configManager.getConfig('provider')).toBe('openai');
       expect(configManager.getConfig('model')).toBe('gpt-4');
     });
