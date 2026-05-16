@@ -4,6 +4,7 @@
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { ConfigManager } from '../core/ConfigManager';
 import inquirer from 'inquirer';
+import fs from 'fs';
 
 describe('ConfigManager (public API)', () => {
   let configManager: ConfigManager;
@@ -247,7 +248,6 @@ describe('ConfigManager (public API)', () => {
     });
 
     test('backupConfig should write backup file', async () => {
-      const fs = require('fs');
       const writeSync = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
       
       await (configManager as any).backupConfig();
@@ -258,7 +258,6 @@ describe('ConfigManager (public API)', () => {
     });
 
     test('exportConfig should export to specified path', async () => {
-      const fs = require('fs');
       const writeSync = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
 
       await (configManager as any).exportConfig('/tmp/config.json');
@@ -309,8 +308,8 @@ describe('ConfigManager (public API)', () => {
     });
 
     test('importConfig should import when confirmed', async () => {
-      const existsSyncSpy = jest.spyOn(require('fs'), 'existsSync').mockReturnValue(true);
-      const readFileSpy = jest.spyOn(require('fs'), 'readFileSync').mockReturnValue(
+      const existsSyncSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+      const readFileSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(
         JSON.stringify({ provider: 'gemini', model: 'gemini-pro', maxTokens: 200, temperature: 0.5 })
       );
       jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
@@ -328,16 +327,15 @@ describe('ConfigManager (public API)', () => {
     });
 
     test('applyTemplate should apply valid template when confirmed', async () => {
-      jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
-      // Mock a valid template
-      const configTemplates = await import('../core/ConfigTemplates');
-      jest.spyOn(configTemplates, 'getTemplate').mockReturnValue({
-        name: 'test-template',
-        description: 'Test template',
-        config: { provider: 'openai', maxTokens: 200 }
-      } as any);
-
-      await (configManager as any).applyTemplate('test-template');
+      const promptSpy = jest.spyOn(inquirer, 'prompt').mockResolvedValue({ confirmed: true } as any);
+      await (configManager as any).applyTemplate('openai-gpt4');
+      expect(promptSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'confirmed', message: 'Apply this template?' })
+        ])
+      );
+      expect(configManager.getConfig('provider')).toBe('openai');
+      expect(configManager.getConfig('model')).toBe('gpt-4');
     });
 
     test('setConfigInteractive for provider should call setProvider', async () => {
@@ -416,7 +414,6 @@ describe('ConfigManager (public API)', () => {
     });
 
     test('restoreConfig should restore config when confirmed', async () => {
-      const fs = require('fs');
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       const backup = {
         version: '1.0.0',

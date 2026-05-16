@@ -1,4 +1,6 @@
 // Manual mock for clipboardy
+import { jest } from '@jest/globals';
+
 const clipboardy = {
   write: jest.fn().mockResolvedValue(undefined),
   read: jest.fn().mockResolvedValue(''),
@@ -6,5 +8,5 @@ const clipboardy = {
   readSync: jest.fn().mockReturnValue(''),
 };
 
-module.exports = clipboardy;
-module.exports.default = clipboardy;
+export const { write, read, writeSync, readSync } = clipboardy;
+export default clipboardy;

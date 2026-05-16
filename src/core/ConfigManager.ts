@@ -1,7 +1,7 @@
 import Conf from 'conf';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { writeFileSync, readFileSync, existsSync } from 'fs';
+import fs from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import crypto from 'crypto';
@@ -53,21 +53,20 @@ export class ConfigManager {
     const keyPath = join(homedir(), '.gitgenius', '.key');
     
     try {
-      if (existsSync(keyPath)) {
-        return readFileSync(keyPath, 'utf8').trim();
+      if (fs.existsSync(keyPath)) {
+        return fs.readFileSync(keyPath, 'utf8').trim();
       } else {
         // Generate new key
         const key = crypto.randomBytes(32).toString('hex');
         const keyDir = join(homedir(), '.gitgenius');
         
         // Create directory if it doesn't exist
-        if (!existsSync(keyDir)) {
-          const { mkdirSync } = require('fs');
-          mkdirSync(keyDir, { recursive: true, mode: 0o700 });
+        if (!fs.existsSync(keyDir)) {
+          fs.mkdirSync(keyDir, { recursive: true, mode: 0o700 });
         }
         
         // Write key file with restricted permissions
-        writeFileSync(keyPath, key, { mode: 0o600 });
+        fs.writeFileSync(keyPath, key, { mode: 0o600 });
         return key;
       }
     } catch (error) {
@@ -103,7 +102,7 @@ export class ConfigManager {
       // Check if we're in a git repository
       const gitDir = process.cwd();
       
-      if (existsSync(join(gitDir, '.git'))) {
+      if (fs.existsSync(join(gitDir, '.git'))) {
         // We're in a git repo, initialize project config
         this.projectConfig = new Conf({
           projectName: 'gitgenius',
@@ -217,7 +216,7 @@ export class ConfigManager {
       };
 
       const backupPath = join(this.config.path, '..', `config-backup-${Date.now()}.json`);
-      writeFileSync(backupPath, JSON.stringify(backup, null, 2));
+      fs.writeFileSync(backupPath, JSON.stringify(backup, null, 2));
 
       console.log(chalk.green('✓ Configuration backed up successfully'));
       console.log(chalk.blue(`  Location: ${backupPath}`));
@@ -229,12 +228,12 @@ export class ConfigManager {
   // Restore configuration from backup
   private async restoreConfig(backupPath: string): Promise<void> {
     try {
-      if (!existsSync(backupPath)) {
+      if (!fs.existsSync(backupPath)) {
         console.error(chalk.red('✗ Backup file not found'));
         return;
       }
 
-      const backupData = JSON.parse(readFileSync(backupPath, 'utf-8')) as ConfigBackup;
+      const backupData = JSON.parse(fs.readFileSync(backupPath, 'utf-8')) as ConfigBackup;
       
       // Validate backup
       const validation = validateConfig(backupData.config);
@@ -348,7 +347,7 @@ export class ConfigManager {
   private async exportConfig(exportPath: string): Promise<void> {
     try {
       const config = this.config.store;
-      writeFileSync(exportPath, JSON.stringify(config, null, 2));
+      fs.writeFileSync(exportPath, JSON.stringify(config, null, 2));
       console.log(chalk.green('✓ Configuration exported successfully'));
       console.log(chalk.blue(`  Location: ${exportPath}`));
     } catch (error) {
@@ -359,12 +358,12 @@ export class ConfigManager {
   // Import configuration
   private async importConfig(importPath: string): Promise<void> {
     try {
-      if (!existsSync(importPath)) {
+      if (!fs.existsSync(importPath)) {
         console.error(chalk.red('✗ Import file not found'));
         return;
       }
 
-      const importedConfig = JSON.parse(readFileSync(importPath, 'utf-8'));
+      const importedConfig = JSON.parse(fs.readFileSync(importPath, 'utf-8'));
       
       // Validate imported config
       const validation = validateConfig(importedConfig);

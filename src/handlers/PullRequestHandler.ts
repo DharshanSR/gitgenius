@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import childProcess from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
 import inquirer from 'inquirer';
@@ -63,7 +63,7 @@ export class PullRequestHandler {
 
   private async getRemoteInfo(): Promise<{ platform: string; owner: string; repo: string; url: string } | null> {
     try {
-      const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
+      const remoteUrl = childProcess.execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
       
       // Parse GitHub URL
       const githubMatch = remoteUrl.match(/github\.com[:/]([^/]+)\/(.+?)(?:\.git)?$/);
@@ -96,13 +96,13 @@ export class PullRequestHandler {
   private async generatePRContent(sourceBranch: string, targetBranch: string): Promise<{ title: string; body: string }> {
     try {
       // Get commits between branches
-      const commits = execSync(
+      const commits = childProcess.execSync(
         `git log ${targetBranch}..${sourceBranch} --oneline --no-merges`,
         { encoding: 'utf8' }
       ).trim();
 
       // Get diff summary
-      const diffStat = execSync(
+      const diffStat = childProcess.execSync(
         `git diff ${targetBranch}...${sourceBranch} --stat`,
         { encoding: 'utf8' }
       ).trim();
@@ -201,7 +201,7 @@ Generate a clear PR title and detailed description explaining what changed and w
   private async createGitHubPR(remoteInfo: any, options: PullRequestOptions & { source: string; target: string }): Promise<void> {
     // Check if GitHub CLI is available
     try {
-      execSync('gh --version', { stdio: 'pipe' });
+      childProcess.execSync('gh --version', { stdio: 'pipe' });
     } catch {
       console.log(chalk.yellow('\n💡 GitHub CLI not found. Install it from: https://cli.github.com/'));
       console.log(chalk.blue('Alternative: Create PR manually at:'));
@@ -210,29 +210,34 @@ Generate a clear PR title and detailed description explaining what changed and w
     }
 
     // Create PR using GitHub CLI
-    const cmd = [
-      'gh pr create',
-      `--title "${options.title}"`,
-      `--body "${options.body}"`,
-      `--base ${options.target}`,
-      `--head ${options.source}`
+    const args = [
+      'pr',
+      'create',
+      '--title',
+      options.title || '',
+      '--body',
+      options.body || '',
+      '--base',
+      options.target,
+      '--head',
+      options.source
     ];
 
     if (options.draft) {
-      cmd.push('--draft');
+      args.push('--draft');
     }
 
     if (options.reviewers && options.reviewers.length > 0) {
-      cmd.push(`--reviewer ${options.reviewers.join(',')}`);
+      args.push('--reviewer', options.reviewers.join(','));
     }
 
-    execSync(cmd.join(' '), { stdio: 'inherit' });
+    childProcess.execFileSync('gh', args, { stdio: 'inherit' });
   }
 
   private async createGitLabPR(remoteInfo: any, options: PullRequestOptions & { source: string; target: string }): Promise<void> {
     // Check if GitLab CLI is available
     try {
-      execSync('glab --version', { stdio: 'pipe' });
+      childProcess.execSync('glab --version', { stdio: 'pipe' });
     } catch {
       console.log(chalk.yellow('\n💡 GitLab CLI not found. Install it from: https://gitlab.com/gitlab-org/cli'));
       console.log(chalk.blue('Alternative: Create MR manually at:'));
@@ -241,18 +246,23 @@ Generate a clear PR title and detailed description explaining what changed and w
     }
 
     // Create MR using GitLab CLI
-    const cmd = [
-      'glab mr create',
-      `--title "${options.title}"`,
-      `--description "${options.body}"`,
-      `--target-branch ${options.target}`,
-      `--source-branch ${options.source}`
+    const args = [
+      'mr',
+      'create',
+      '--title',
+      options.title || '',
+      '--description',
+      options.body || '',
+      '--target-branch',
+      options.target,
+      '--source-branch',
+      options.source
     ];
 
     if (options.draft) {
-      cmd.push('--draft');
+      args.push('--draft');
     }
 
-    execSync(cmd.join(' '), { stdio: 'inherit' });
+    childProcess.execFileSync('glab', args, { stdio: 'inherit' });
   }
 }

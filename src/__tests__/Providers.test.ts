@@ -88,7 +88,7 @@ describe('OpenAIProvider', () => {
     test('should throw on 401 unauthorized error', async () => {
       const axios = await import('axios');
       const axiosError = { isAxiosError: true, response: { status: 401 }, message: 'Unauthorized' };
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(axiosError);
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('Invalid OpenAI API key');
@@ -97,7 +97,7 @@ describe('OpenAIProvider', () => {
     test('should throw on 429 rate limit error', async () => {
       const axios = await import('axios');
       const axiosError = { isAxiosError: true, response: { status: 429 }, message: 'Rate limit' };
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(axiosError);
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('rate limit exceeded');
@@ -110,7 +110,7 @@ describe('OpenAIProvider', () => {
         response: { status: 500, data: { error: { message: 'Server error' } } },
         message: 'Server error' 
       };
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(axiosError);
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('OpenAI API error');
@@ -118,7 +118,7 @@ describe('OpenAIProvider', () => {
 
     test('should rethrow non-axios errors', async () => {
       const axios = await import('axios');
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(false);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(false);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(new Error('Network error'));
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('Network error');
@@ -183,7 +183,7 @@ describe('GeminiProvider', () => {
     test('should throw on 403 forbidden error', async () => {
       const axios = await import('axios');
       const axiosError = { isAxiosError: true, response: { status: 403 }, message: 'Forbidden' };
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(axiosError);
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('Invalid Gemini API key');
@@ -192,7 +192,7 @@ describe('GeminiProvider', () => {
     test('should throw on 429 rate limit error', async () => {
       const axios = await import('axios');
       const axiosError = { isAxiosError: true, response: { status: 429 }, message: 'Rate limit' };
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(axiosError);
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('rate limit exceeded');
@@ -205,7 +205,7 @@ describe('GeminiProvider', () => {
         response: { status: 500, data: { error: { message: 'Server error' } } },
         message: 'Server error'
       };
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(true);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(axiosError);
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('Gemini API error');
@@ -213,7 +213,7 @@ describe('GeminiProvider', () => {
 
     test('should rethrow non-axios errors', async () => {
       const axios = await import('axios');
-      (axios.isAxiosError as jest.MockedFunction<any>).mockReturnValue(false);
+      (axios.default.isAxiosError as jest.MockedFunction<any>).mockReturnValue(false);
       (axios.default.post as jest.MockedFunction<any>).mockRejectedValue(new Error('Connection failed'));
 
       await expect(provider.generateCommitMessage('diff')).rejects.toThrow('Connection failed');
