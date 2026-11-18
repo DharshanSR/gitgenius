@@ -18,6 +18,73 @@ export class GitGeniusError extends Error {
 }
 
 export class ErrorHandler {
+  /**
+   * Retry a transient operation with exponential backoff.
+   * Non-transient errors are returned immediately.
+   */
+  static async retry<T>(
+    operation: () => Promise<T>,
+    options: { attempts?: number; initialDelayMs?: number } = {}
+  ): Promise<T> {
+    const attempts = Math.max(1, options.attempts ?? 3);
+    const initialDelayMs = Math.max(0, options.initialDelayMs ?? 250);
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        if (attempt === attempts || !this.isRetryable(error)) break;
+        await new Promise(resolve =>
+          setTimeout(resolve, initialDelayMs * Math.pow(2, attempt - 1))
+        );
+      }
+    }
+    throw lastError;
+  }
+
+  static isRetryable(error: unknown): boolean {
+    if (!error) return false;
+    const status = (error as any)?.response?.status;
+    if (status === 429 || (typeof status === 'number' && status >= 500)) return true;
+    const code = (error as any)?.code;
+    if (typeof code === 'string') {
+      return ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN'].includes(code);
+    }
+    const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    return message.includes('timeout') ||
+      message.includes('network') ||
+      message.includes('connection') ||
+      message.includes('rate limit');
+  }
+
+  static validateRequiredString(value: unknown, label: string, maxLength = 10000): string {
+    if (typeof value !== 'string' || value.trim().length === 0) {
+      throw this.userError(`${label} is required`, [`Provide a valid ${label.toLowerCase()}`]);
+    }
+    const sanitized = value.trim().replace(/\0/g, '').replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+    if (sanitized.length === 0) {
+      throw this.userError(`${label} is required`, [`Provide a valid ${label.toLowerCase()}`]);
+    }
+    if (sanitized.length > maxLength) {
+      throw this.userError(`${label} is too long`, [`Use ${maxLength} characters or fewer`]);
+    }
+    return sanitized;
+  }
+
+  static validatePositiveInteger(value: unknown, label: string, max = 100000): number {
+    const parsed = typeof value === 'number'
+      ? value
+      : (typeof value === 'string' && /^\d+$/.test(value.trim()) ? Number(value) : NaN);
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > max) {
+      throw this.userError(`Invalid ${label.toLowerCase()}`, [
+        `Provide a whole number between 1 and ${max}`
+      ]);
+    }
+    return parsed;
+  }
+
   static handle(error: unknown): void {
     if (error instanceof GitGeniusError) {
       this.handleGitGeniusError(error);

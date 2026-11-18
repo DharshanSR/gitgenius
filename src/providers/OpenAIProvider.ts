@@ -3,6 +3,7 @@ import { AIProvider } from '../types.js';
 import { SecurityUtils } from '../utils/SecurityUtils.js';
 import { SecurityManager } from '../core/SecurityConfig.js';
 import { ConfigManager } from '../core/ConfigManager.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class OpenAIProvider implements AIProvider {
   name = 'openai';
@@ -22,6 +23,8 @@ export class OpenAIProvider implements AIProvider {
 
   async generateCommitMessage(diff: string, type?: string, detailed?: boolean): Promise<string> {
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
+    diff = ErrorHandler.validateRequiredString(diff, 'Git diff', 100000);
+    if (type) type = ErrorHandler.validateRequiredString(type, 'Commit type', 50);
     
     // Enforce HTTPS
     this.securityManager.validateUrl(apiUrl);
@@ -57,26 +60,28 @@ export class OpenAIProvider implements AIProvider {
         secureConfig.timeout = userTimeout;
       }
       
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: detailed 
-                ? 'You are a helpful assistant that generates detailed and meaningful git commit messages with explanatory body text based on code diffs.'
-                : 'You are a helpful assistant that generates concise and meaningful git commit messages based on code diffs.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: detailed ? 300 : 150,
-          temperature: 0.7
-        },
-        secureConfig
+      const response = await ErrorHandler.retry(
+        () => axios.post(
+          apiUrl,
+          {
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: detailed 
+                  ? 'You are a helpful assistant that generates detailed and meaningful git commit messages with explanatory body text based on code diffs.'
+                  : 'You are a helpful assistant that generates concise and meaningful git commit messages based on code diffs.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            max_tokens: detailed ? 300 : 150,
+            temperature: 0.7
+          },
+          secureConfig
+        )
       );
 
       const message = response.data.choices[0].message.content.trim();
@@ -116,6 +121,8 @@ export class OpenAIProvider implements AIProvider {
     onChunk?: (chunk: string) => void
   ): Promise<string> {
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
+    diff = ErrorHandler.validateRequiredString(diff, 'Git diff', 100000);
+    if (type) type = ErrorHandler.validateRequiredString(type, 'Commit type', 50);
 
     this.securityManager.validateUrl(apiUrl);
 
@@ -145,24 +152,26 @@ export class OpenAIProvider implements AIProvider {
         secureConfig.timeout = userTimeout;
       }
 
-      const response = await axios.post(
-        apiUrl,
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: detailed
-                ? 'You are a helpful assistant that generates detailed and meaningful git commit messages with explanatory body text based on code diffs.'
-                : 'You are a helpful assistant that generates concise and meaningful git commit messages based on code diffs.'
-            },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: detailed ? 300 : 150,
-          temperature: 0.7,
-          stream: true
-        },
-        { ...secureConfig, responseType: 'stream' }
+      const response = await ErrorHandler.retry(
+        () => axios.post(
+          apiUrl,
+          {
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: detailed
+                  ? 'You are a helpful assistant that generates detailed and meaningful git commit messages with explanatory body text based on code diffs.'
+                  : 'You are a helpful assistant that generates concise and meaningful git commit messages based on code diffs.'
+              },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: detailed ? 300 : 150,
+            temperature: 0.7,
+            stream: true
+          },
+          { ...secureConfig, responseType: 'stream' }
+        )
       );
 
       return await new Promise<string>((resolve, reject) => {
@@ -264,4 +273,3 @@ ${diff}
 Commit message:`;
   }
 }
-

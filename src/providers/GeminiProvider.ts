@@ -3,6 +3,7 @@ import { AIProvider } from '../types.js';
 import { SecurityUtils } from '../utils/SecurityUtils.js';
 import { SecurityManager } from '../core/SecurityConfig.js';
 import { ConfigManager } from '../core/ConfigManager.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class GeminiProvider implements AIProvider {
   name = 'gemini';
@@ -22,6 +23,8 @@ export class GeminiProvider implements AIProvider {
 
   async generateCommitMessage(diff: string, type?: string, detailed?: boolean): Promise<string> {
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${this.apiKey}`;
+    diff = ErrorHandler.validateRequiredString(diff, 'Git diff', 100000);
+    if (type) type = ErrorHandler.validateRequiredString(type, 'Commit type', 50);
     
     // Enforce HTTPS
     this.securityManager.validateUrl(apiUrl);
@@ -57,24 +60,26 @@ export class GeminiProvider implements AIProvider {
         secureConfig.timeout = userTimeout;
       }
       
-      const response = await axios.post(
-        apiUrl,
-        {
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
+      const response = await ErrorHandler.retry(
+        () => axios.post(
+          apiUrl,
+          {
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: detailed ? 300 : 150
             }
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: detailed ? 300 : 150
-          }
-        },
-        secureConfig
+          },
+          secureConfig
+        )
       );
 
       const message = response.data.candidates[0].content.parts[0].text.trim();
@@ -113,6 +118,8 @@ export class GeminiProvider implements AIProvider {
     detailed?: boolean,
     onChunk?: (chunk: string) => void
   ): Promise<string> {
+    diff = ErrorHandler.validateRequiredString(diff, 'Git diff', 100000);
+    if (type) type = ErrorHandler.validateRequiredString(type, 'Commit type', 50);
     // Gemini streaming endpoint (alt=sse)
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:streamGenerateContent?key=${this.apiKey}&alt=sse`;
 
@@ -144,16 +151,18 @@ export class GeminiProvider implements AIProvider {
         secureConfig.timeout = userTimeout;
       }
 
-      const response = await axios.post(
-        apiUrl,
-        {
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: detailed ? 300 : 150
-          }
-        },
-        { ...secureConfig, responseType: 'stream' }
+      const response = await ErrorHandler.retry(
+        () => axios.post(
+          apiUrl,
+          {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: detailed ? 300 : 150
+            }
+          },
+          { ...secureConfig, responseType: 'stream' }
+        )
       );
 
       return await new Promise<string>((resolve, reject) => {
@@ -256,4 +265,3 @@ Git diff:
 ${diff}`;
   }
 }
-

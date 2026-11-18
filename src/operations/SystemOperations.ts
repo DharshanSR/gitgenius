@@ -4,6 +4,7 @@ import { GitService } from '../services/GitService.js';
 import { AIService } from '../services/AIService.js';
 import { ConfigManager } from '../core/ConfigManager.js';
 import { StatsOptions, UpdateOptions, GitStateOptions } from '../types.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class SystemOperations {
   private gitService: GitService;
@@ -18,7 +19,7 @@ export class SystemOperations {
 
   async showStats(options: StatsOptions): Promise<void> {
     try {
-      const days = parseInt(options.days || '30');
+      const days = ErrorHandler.validatePositiveInteger(options.days || '30', 'Number of days', 3650);
       const since = new Date();
       since.setDate(since.getDate() - days);
 

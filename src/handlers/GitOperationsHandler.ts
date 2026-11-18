@@ -3,6 +3,7 @@ import ora from 'ora';
 import { AIService } from '../services/AIService.js';
 import { GitService } from '../services/GitService.js';
 import { LogOptions, DiffOptions, ReviewOptions, SuggestOptions } from '../types.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class GitOperationsHandler {
   private aiService: AIService;
@@ -15,7 +16,7 @@ export class GitOperationsHandler {
 
   async showLog(options: LogOptions): Promise<void> {
     try {
-      const count = parseInt(options.number || '10');
+      const count = ErrorHandler.validatePositiveInteger(options.number || '10', 'Commit count', 10000);
       const logs = await this.gitService.getLog({
         maxCount: count,
         ...(options.since && { since: options.since }),

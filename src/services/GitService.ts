@@ -24,9 +24,20 @@ export class GitService {
   }
 
   async ensureGitRepo(): Promise<void> {
-    const isRepo = await this.checkIsRepo();
-    if (!isRepo) {
-      throw new Error('Not in a git repository');
+    try {
+      const isRepo = await this.checkIsRepo();
+      if (!isRepo) {
+        throw ErrorHandler.gitError(
+          'Not in a git repository',
+          ['Run this command from inside a Git repository', 'Initialize one with: git init']
+        );
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'GitGeniusError') throw error;
+      throw ErrorHandler.gitError(
+        `Unable to validate the Git repository: ${error instanceof Error ? error.message : String(error)}`,
+        ['Check that Git is installed and accessible', 'Run git status to verify the repository']
+      );
     }
   }
 
@@ -95,8 +106,12 @@ export class GitService {
   }
 
   async getFileDiff(file: string): Promise<string> {
-    const diff = await this.git.diff([file]);
-    return this.applyDiffSizeLimit(diff, `file diff (${file})`);
+    const validatedFile = ErrorHandler.validateRequiredString(file, 'File path', 4096);
+    if (validatedFile.includes('\n') || validatedFile.includes('\r')) {
+      throw ErrorHandler.userError('Invalid file path', ['Provide a single valid repository file path']);
+    }
+    const diff = await this.git.diff(['--', validatedFile]);
+    return this.applyDiffSizeLimit(diff, `file diff (${validatedFile})`);
   }
 
   /**
@@ -202,6 +217,10 @@ export class GitService {
 
   async commit(message: string, options?: any): Promise<void> {
     try {
+      message = ErrorHandler.validateRequiredString(message, 'Commit message', 10000);
+      if (!message.trim()) {
+        throw ErrorHandler.userError('Commit message cannot be empty');
+      }
       // Validate environment before committing
       const validation = await this.stateManager.validateEnvironment();
       if (!validation.valid) {

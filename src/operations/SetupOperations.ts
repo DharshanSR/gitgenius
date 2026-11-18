@@ -4,6 +4,7 @@ import { GitService } from '../services/GitService.js';
 import { TemplateService } from '../services/TemplateService.js';
 import { ConfigManager } from '../core/ConfigManager.js';
 import { InitOptions, FeedbackOptions } from '../types.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class SetupOperations {
   private gitService: GitService;
@@ -60,10 +61,8 @@ echo "GitGenius: Commit message validated"
       console.log(chalk.blue('[FEEDBACK] GitGenius Feedback'));
 
       if (options.rating) {
-        const rating = parseInt(options.rating);
-        if (rating >= 1 && rating <= 5) {
-          console.log(chalk.green(`✨ [SUCCESS] Thank you for rating GitGenius ${rating}/5 stars!`));
-        }
+        const rating = ErrorHandler.validatePositiveInteger(options.rating, 'Rating', 5);
+        console.log(chalk.green(`✨ [SUCCESS] Thank you for rating GitGenius ${rating}/5 stars!`));
       }
 
       const { feedbackType, message } = await inquirer.prompt([
