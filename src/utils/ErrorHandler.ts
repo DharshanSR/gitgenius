@@ -63,7 +63,11 @@ export class ErrorHandler {
     if (typeof value !== 'string' || value.trim().length === 0) {
       throw this.userError(`${label} is required`, [`Provide a valid ${label.toLowerCase()}`]);
     }
-    const sanitized = value.trim().replace(/\0/g, '').replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+    const sanitized = value.trim().replace(/\0/g, '').replace(
+      // eslint-disable-next-line no-control-regex
+      /[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g,
+      ''
+    );
     if (sanitized.length === 0) {
       throw this.userError(`${label} is required`, [`Provide a valid ${label.toLowerCase()}`]);
     }
