@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { GitService } from '../services/GitService.js';
 import { ConfigManager } from '../core/ConfigManager.js';
 import { UndoOptions, HistoryOptions, AliasOptions } from '../types.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class UtilityHandler {
   private gitService: GitService;
@@ -71,7 +72,7 @@ export class UtilityHandler {
         return;
       }
 
-      const count = parseInt(options.number || '10');
+      const count = ErrorHandler.validatePositiveInteger(options.number || '10', 'History count', 10000);
       console.log(chalk.blue(`[HISTORY] Message History (${Math.min(count, history.length)} of ${history.length}):`));
       
       history.slice(0, count).forEach((msg: any, index: number) => {

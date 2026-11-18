@@ -6,6 +6,7 @@ import { logger, LogLevel } from '../utils/Logger.js';
 import { errorTracker } from '../utils/ErrorTracker.js';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor.js';
 import { memoryMonitor } from '../utils/MemoryMonitor.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export interface LogCommandOptions {
   level?: string;
@@ -95,7 +96,7 @@ export class LoggingHandler {
     }
 
     // Show recent logs (tail)
-    const lines = parseInt(options.lines || '50');
+    const lines = ErrorHandler.validatePositiveInteger(options.lines || '50', 'Log line count', 100000);
     const logs = logger.getRecentLogs(lines);
     
     console.log(chalk.blue(`[LOGS] Recent logs (${logs.length} entries):`));

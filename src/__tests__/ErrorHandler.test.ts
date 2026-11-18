@@ -94,6 +94,37 @@ describe('ErrorHandler static factory methods', () => {
   });
 });
 
+describe('ErrorHandler retry and validation helpers', () => {
+  test('should retry transient failures and then recover', async () => {
+    const operation = jest.fn<() => Promise<string>>()
+      .mockRejectedValueOnce({ code: 'ECONNRESET' })
+      .mockResolvedValueOnce('recovered');
+
+    await expect(ErrorHandler.retry(operation, { attempts: 2, initialDelayMs: 1 }))
+      .resolves.toBe('recovered');
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  test('should not retry a permanent failure', async () => {
+    const operation = jest.fn<() => Promise<string>>()
+      .mockRejectedValue(new Error('Invalid API key'));
+
+    await expect(ErrorHandler.retry(operation, { attempts: 3, initialDelayMs: 1 }))
+      .rejects.toThrow('Invalid API key');
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
+
+  test('should validate required strings', () => {
+    expect(ErrorHandler.validateRequiredString('  valid  ', 'Value')).toBe('valid');
+    expect(() => ErrorHandler.validateRequiredString('   ', 'Value')).toThrow('Value is required');
+  });
+
+  test('should validate positive integers', () => {
+    expect(ErrorHandler.validatePositiveInteger('12', 'Count', 100)).toBe(12);
+    expect(() => ErrorHandler.validatePositiveInteger('0', 'Count', 100)).toThrow('Invalid count');
+  });
+});
+
 describe('ErrorHandler.handle', () => {
   beforeEach(() => {
     mockExit.mockClear();

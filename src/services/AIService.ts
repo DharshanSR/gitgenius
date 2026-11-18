@@ -4,6 +4,7 @@ import { GeminiProvider } from '../providers/GeminiProvider.js';
 import { AIProvider } from '../types.js';
 import { CacheManager } from '../utils/CacheManager.js';
 import { DiffChunker } from '../utils/DiffChunker.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 /** A pending item in the request batch queue. */
 interface BatchItem {
@@ -46,7 +47,10 @@ export class AIService {
     const apiKey = this.configManager.getApiKey();
 
     if (!apiKey) {
-      throw new Error('API key not configured. Run: gitgenius config apiKey');
+      throw ErrorHandler.configError(
+        'API key not configured',
+        ['Configure an API key: gitgenius config apiKey', 'Choose a provider: gitgenius config provider']
+      );
     }
 
     switch (provider) {
@@ -55,7 +59,10 @@ export class AIService {
       case 'gemini':
         return new GeminiProvider(apiKey);
       default:
-        throw new Error(`Unsupported provider: ${provider}`);
+        throw ErrorHandler.configError(
+          `Unsupported AI provider: ${provider}`,
+          ['Use openai or gemini', 'Set it with: gitgenius config provider']
+        );
     }
   }
 
@@ -262,4 +269,3 @@ ${diff.substring(0, 3000)}`,
     }
   }
 }
-

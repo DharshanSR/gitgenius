@@ -7,6 +7,7 @@ import { AIService } from '../services/AIService.js';
 import { GitService } from '../services/GitService.js';
 import { ConfigManager } from '../core/ConfigManager.js';
 import { CommitOptions, PreviousCommitOptions } from '../types.js';
+import { ErrorHandler } from '../utils/ErrorHandler.js';
 
 export class CommitHandler {
   private aiService: AIService;
@@ -39,7 +40,10 @@ export class CommitHandler {
       // Get the diff
       const diff = await this.gitService.getStagedDiff();
       if (!diff.trim()) {
-        throw new Error('No staged changes to commit');
+        throw ErrorHandler.gitError(
+          'No staged changes to commit',
+          ['Stage files with: git add <file>', 'Review staged changes with: git diff --staged']
+        );
       }
 
       // Generate commit message
